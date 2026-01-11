@@ -1,0 +1,12 @@
+# Exclude Lake build artifacts - these will be built fresh in the container
+lean/.lake/
+lean/lake-packages/
+lean/.elan/
+
+# Exclude local build cache
+**/.cache/
+**/__pycache__/
+**/*.pyc
+
+# Exclude git
+.git/
