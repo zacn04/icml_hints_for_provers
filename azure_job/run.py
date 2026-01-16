@@ -183,7 +183,7 @@ def main() -> int:
         provider="hf",
         name=args.model,
         temperature=temp,
-        max_tokens=256,
+        max_tokens=1024,
     )
 
     # ----------------------------
