@@ -14,6 +14,7 @@ import torch
 from rich.console import Console
 
 from autoform.model import Model
+from autoform.ir import PerturbMode
 from autoform.search import (
     run_oneshot,
     run_sample_k,
@@ -101,6 +102,26 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--timeout", type=int, default=60)
     ap.add_argument("--seed", type=int, default=1)
 
+    # Model backend
+    ap.add_argument(
+        "--provider",
+        choices=["hf", "ollama", "openai_compat"],
+        default="hf",
+    )
+    ap.add_argument("--base-url", default="",
+                     help="Base URL for openai_compat provider (default: env VLLM_BASE_URL)")
+
+    # Perturbation mode (only for --baseline structured)
+    ap.add_argument(
+        "--perturbation",
+        choices=["skeleton", "paraphrase", "comment"],
+        default="skeleton",
+    )
+
+    # Condition label for event logging
+    ap.add_argument("--condition", default=None,
+                     help="Human-readable condition label (e.g. A-RL, B-RL, C1, C2)")
+
     # Parallelism
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--num-shards", type=int, default=1)
@@ -124,11 +145,14 @@ def main() -> int:
     bench_path = Path(args.benchmark)
     assert bench_path.exists(), bench_path
 
+    perturb_mode = PerturbMode(args.perturbation)
+
     # Deterministic experiment identity
     exp_key = {
         "benchmark": bench_path.name,
         "model": args.model,
         "baseline": args.baseline,
+        "perturbation": args.perturbation,
         "k": args.k,
         "timeout": args.timeout,
         "seed": args.seed,
@@ -180,10 +204,11 @@ def main() -> int:
     temp = 0.0 if args.baseline == "oneshot" else 0.6
 
     model = Model(
-        provider="hf",
+        provider=args.provider,
         name=args.model,
         temperature=temp,
         max_tokens=1024,
+        base_url=args.base_url,
     )
 
     # ----------------------------
@@ -231,6 +256,7 @@ def main() -> int:
                     k_variants=args.k,
                     timeout_sec=args.timeout,
                     seed=args.seed,
+                    perturb_mode=perturb_mode,
                     log_dir=debug_log_dir,
                 )
 
@@ -249,6 +275,8 @@ def main() -> int:
                 "theorem_id": tid,
                 "model": args.model,
                 "baseline": args.baseline,
+                "perturbation_mode": args.perturbation,
+                "condition": args.condition or f"{args.baseline}-{args.perturbation}",
                 "k": args.k,
                 "proved": result.proved,
                 "compiled": result.compiled,
@@ -257,6 +285,16 @@ def main() -> int:
                 "time_ms": result.time_ms,
                 "trial_time_ms": now_ms() - trial_start,
                 "error_type": result.error_type,
+                "attempt_results": [
+                    {
+                        "attempt_idx": ar.attempt_idx,
+                        "skeleton_id": ar.skeleton_id,
+                        "proved": ar.proved,
+                        "compiled": ar.compiled,
+                        "error_type": ar.error_type,
+                    }
+                    for ar in outcome.attempt_results
+                ],
             }
 
         except Exception as e:

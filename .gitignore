@@ -1,0 +1,15 @@
+/.lake
+
+outputs/
+__pycache__/
+*.pyc
+.venv/
+.env
+.DS_Store
+.azureml/
+azureml/.azure/
+*.yml
+*.yaml
+.azuremlignore
+README_analysis.md
+/.lake

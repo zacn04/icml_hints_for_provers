@@ -3,14 +3,24 @@ Search loop with Hybrid Prompting (Chat vs. Completion).
 Automatically switches to 'Raw Completion' mode for DeepSeek-Prover.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
-from .ir import make_base_ir, perturb, IR
+from .ir import make_base_ir, perturb, IR, PerturbMode
 from .model import Model
 from .lean_runner import LeanResult, check
+
+
+@dataclass(frozen=True)
+class AttemptResult:
+    attempt_idx: int
+    skeleton_id: int | None
+    proved: bool
+    compiled: bool
+    error_type: str
+
 
 @dataclass(frozen=True)
 class SearchOutcome:
@@ -18,6 +28,7 @@ class SearchOutcome:
     attempts: int
     llm_calls: int
     proof_text: str | None
+    attempt_results: List[AttemptResult] = field(default_factory=list)
 
 
 # ---------------------------------------------------------
@@ -27,7 +38,15 @@ class SearchOutcome:
 def _prompt_deepseek_completion(ir: IR) -> str:
     # Lean 4 / Mathlib4 header with explicit version marker
     header = "/- Lean 4 with Mathlib4 -/\nimport Mathlib\n\nopen BigOperators Real Nat Topology\n\n"
+
+    # Paraphrase mode: use instruction as a Lean comment preamble
+    if ir.instruction:
+        header = f"/- {ir.instruction} -/\n{header}"
+
     hint_str = f"/-- Hint: {ir.goal_hint} -/\n" if ir.goal_hint else ""
+
+    # Comment prefix mode: add before the theorem
+    comment_str = f"{ir.comment_prefix}\n" if ir.comment_prefix else ""
 
     theorem = ir.theorem.rstrip()
     if theorem.endswith(":= by"):
@@ -37,9 +56,9 @@ def _prompt_deepseek_completion(ir: IR) -> str:
         prompt_tail = ":= by\n"
     else:
         tactics_str = "\n  ".join(ir.tactic_prefix)
-        prompt_tail = f":= by\n  {tactics_str}\n"   # <-- add newline
+        prompt_tail = f":= by\n  {tactics_str}\n"
 
-    return f"{header}{hint_str}{theorem}\n{prompt_tail}"
+    return f"{header}{hint_str}{comment_str}{theorem}\n{prompt_tail}"
 
 
 
@@ -177,6 +196,7 @@ def run_search(
     seed: int,
     k_variants: int,
     timeout_sec: int,
+    perturb_mode: PerturbMode = PerturbMode.SKELETON,
     use_ir: bool = True,
     use_search: bool = True,
     use_feedback: bool = True,
@@ -187,34 +207,34 @@ def run_search(
         base = make_base_ir(theorem, context)
     else:
         base = IR(theorem=theorem.strip(), tactic_prefix=(), goal_hint=None)
-    
-    variants = perturb(base, seed=seed, k=k_variants) if use_search else [base]
+
+    variants = perturb(base, seed=seed, k=k_variants, mode=perturb_mode) if use_search else [base]
 
     best: LeanResult | None = None
     best_proof: str | None = None
     attempts = 0
     llm_calls = 0
+    attempt_results: List[AttemptResult] = []
 
     model_name = getattr(model, "name", "unknown")
 
-    # Create log directory if specified
     if log_dir:
         log_dir.mkdir(parents=True, exist_ok=True)
 
     for attempt_idx, ir in enumerate(variants):
-        # Dispatch prompt based on model type
         prompt = ir_to_prompt(ir, model_name)
 
         llm_calls += 1
         proof_body = model.generate(prompt=prompt, seed=seed)
 
-        # Save prompt and output to file
         if log_dir:
             log_entry = {
                 "attempt": attempt_idx,
                 "theorem": ir.theorem,
                 "tactic_prefix": list(ir.tactic_prefix),
                 "goal_hint": ir.goal_hint,
+                "instruction": ir.instruction,
+                "comment_prefix": ir.comment_prefix,
                 "prompt": prompt,
                 "raw_output": proof_body,
                 "seed": seed,
@@ -227,10 +247,8 @@ def run_search(
             print(f"\n[DEBUG] Prompt (Tail):\n...{prompt[-200:]}")
             print(f"[DEBUG] Output:\n{proof_body}\n")
 
-        # Robust reconstruction
         full_proof = _reconstruct_full_proof(ir, proof_body, model_name)
 
-        # Save reconstructed proof
         if log_dir:
             with open(log_dir / f"attempt_{attempt_idx:03d}_reconstructed.lean", "w") as f:
                 f.write(full_proof)
@@ -238,10 +256,23 @@ def run_search(
         attempts += 1
         res = check(full_proof, timeout_sec=timeout_sec)
 
-        # Log the result
+        # Track per-attempt result for downstream analysis
+        from .ir import TACTIC_SKELETONS
+        skeleton_id = None
+        if perturb_mode == PerturbMode.SKELETON and ir.tactic_prefix in TACTIC_SKELETONS:
+            skeleton_id = TACTIC_SKELETONS.index(ir.tactic_prefix)
+        attempt_results.append(AttemptResult(
+            attempt_idx=attempt_idx,
+            skeleton_id=skeleton_id,
+            proved=res.proved,
+            compiled=res.compiled,
+            error_type=res.error_type,
+        ))
+
         if log_dir:
             result_entry = {
                 "attempt": attempt_idx,
+                "skeleton_id": skeleton_id,
                 "proved": res.proved,
                 "compiled": res.compiled,
                 "error_type": res.error_type,
@@ -261,7 +292,13 @@ def run_search(
         if not use_feedback:
             break
 
-    return SearchOutcome(best=best, attempts=attempts, llm_calls=llm_calls, proof_text=best_proof)
+    return SearchOutcome(
+        best=best,
+        attempts=attempts,
+        llm_calls=llm_calls,
+        proof_text=best_proof,
+        attempt_results=attempt_results,
+    )
 
 
 def run_oneshot(
