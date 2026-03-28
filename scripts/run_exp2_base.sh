@@ -15,14 +15,14 @@ print_header "Exp 2: BASE Model (DeepSeek-Prover-V1.5)"
 # -----------------------------------------------
 for K in 16 32 64; do
     run_cmd "Exp2: A-BASE sample pass@${K}" \
-        python azure_job/run.py \
+        python3 azure_job/run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_BASE" \
             --baseline sample --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \
             --condition "A-BASE" --output-root "$OUTPUT_ROOT"
 
     run_cmd "Exp2: B-BASE structured/skeleton pass@${K}" \
-        python azure_job/run.py \
+        python3 azure_job/run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_BASE" \
             --baseline structured --perturbation skeleton --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \

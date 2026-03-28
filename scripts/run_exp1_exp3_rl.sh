@@ -15,14 +15,14 @@ print_header "Exp 1 + 3: RL Model (DeepSeek-Prover-V1.5-RL)"
 # -----------------------------------------------
 for K in 16 32 64 128; do
     run_cmd "Exp1: A-RL sample pass@${K}" \
-        python azure_job/run.py \
+        python3 azure_job/run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_RL" \
             --baseline sample --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \
             --condition "A-RL" --output-root "$OUTPUT_ROOT"
 
     run_cmd "Exp1: B-RL structured/skeleton pass@${K}" \
-        python azure_job/run.py \
+        python3 azure_job/run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_RL" \
             --baseline structured --perturbation skeleton --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \
@@ -34,14 +34,14 @@ done
 # C1: paraphrase, C2: comment
 # -----------------------------------------------
 run_cmd "Exp3: C1 structured/paraphrase pass@16" \
-    python azure_job/run.py \
+    python3 azure_job/run.py \
         --benchmark "$BENCHMARK" --model "$MODEL_RL" \
         --baseline structured --perturbation paraphrase --k 16 --timeout "$TIMEOUT" --seed "$SEED" \
         --provider "$PROVIDER" $BASE_URL_FLAG \
         --condition "C1" --output-root "$OUTPUT_ROOT"
 
 run_cmd "Exp3: C2 structured/comment pass@16" \
-    python azure_job/run.py \
+    python3 azure_job/run.py \
         --benchmark "$BENCHMARK" --model "$MODEL_RL" \
         --baseline structured --perturbation comment --k 16 --timeout "$TIMEOUT" --seed "$SEED" \
         --provider "$PROVIDER" $BASE_URL_FLAG \
