@@ -1,0 +1,19 @@
+name: deepseek-prover
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pytorch=2.1.*
+  - pytorch-cuda=12.1
+  - transformers>=4.36
+  - accelerate
+  - datasets
+  - sentencepiece
+  - numpy
+  - pip
+  - pip:
+      - einops
+      - tqdm
+      - wandb

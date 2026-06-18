@@ -1,0 +1,26 @@
+experiment:
+  name: "ir_search_v0"
+  output_dir: "outputs/runs"
+  log_dir: "outputs/logs"
+  limit: null
+  seeds: [1,2,3,4,5]
+
+benchmark:
+  path: "benchmarks/minif2f_easy.jsonl"
+  start: 0
+  count: null
+
+model:
+  provider: "hf"
+  name: "deepseek-ai/DeepSeek-Prover-V2-7B" 
+  max_tokens: 2048
+  temperature: 0.2
+
+search:
+  k_variants: 1 # number of IR variants to try per seed
+  selection: "score"
+  max_attempts: 8
+
+lean:
+  runner: "lean"
+  timeout_sec: 120
