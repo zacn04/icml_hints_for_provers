@@ -13,7 +13,7 @@
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #ffffff;
@@ -32,11 +32,12 @@
     margin: 0;
     background: var(--bg);
     color: var(--fg);
-    font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
-    font-size: 19px;
-    line-height: 1.55;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.005em;
   }
   main {
     max-width: 760px;
@@ -49,17 +50,17 @@
   }
   h1 {
     font-weight: 600;
-    font-size: 2.4rem;
-    line-height: 1.15;
-    margin: 0 0 0.4rem;
-    letter-spacing: -0.01em;
+    font-size: 2.1rem;
+    line-height: 1.2;
+    margin: 0 0 0.45rem;
+    letter-spacing: -0.022em;
   }
   .subtitle {
-    font-style: italic;
     color: var(--muted);
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     margin: 0 0 1.2rem;
     font-weight: 400;
+    letter-spacing: -0.01em;
   }
   .author {
     font-size: 1.05rem;
@@ -104,20 +105,20 @@
   }
   section { margin-top: 3rem; }
   h2 {
-    font-weight: 500;
-    font-size: 1.4rem;
+    font-weight: 600;
+    font-size: 1.2rem;
     margin: 0 0 1rem;
     border-bottom: 1px solid var(--rule);
-    padding-bottom: 0.35rem;
-    letter-spacing: 0.005em;
+    padding-bottom: 0.4rem;
+    letter-spacing: -0.015em;
   }
   .tldr {
     background: var(--card);
     border-left: 2px solid var(--fg);
-    padding: 0.95rem 1.25rem;
-    font-style: italic;
+    padding: 0.85rem 1.2rem;
     color: var(--fg);
     margin: 1.5rem 0;
+    font-size: 1.02rem;
   }
   p, ul { margin: 0.8rem 0; }
   a {
@@ -192,8 +193,8 @@
   }
   @media (max-width: 540px) {
     main { padding: 2.5rem 1.1rem 3rem; }
-    h1 { font-size: 1.85rem; }
-    body { font-size: 18px; }
+    h1 { font-size: 1.6rem; }
+    body { font-size: 15.5px; }
     table { font-size: 0.78rem; }
     pre { font-size: 0.78rem; padding: 0.85rem 0.95rem; }
   }
@@ -215,13 +216,13 @@
   </header>
 
   <p class="tldr">
-    RL-trained Lean theorem provers run out of ideas as you sample more &mdash; a fixed schedule of 15 tactic skeletons closes the gap, and the effect is RL-specific.
+    RL-trained Lean theorem provers run out of ideas as you sample more. A fixed schedule of 15 tactic skeletons closes the gap, and the effect is RL-specific.
   </p>
 
   <section>
     <h2>Summary</h2>
     <p>
-      RL-trained Lean theorem provers hit a sampling ceiling. On miniF2F-test, doubling DeepSeek-Prover-V1.5-RL&rsquo;s i.i.d.&nbsp;sampling budget from <code>k=32</code> to <code>k=64</code> adds zero new solved theorems &mdash; both budgets land at 42/244. A fixed schedule of 15 common tactic openings (<code>simp</code>, <code>intro</code>, <code>constructor</code>, &hellip;) breaks the plateau, with a mean gain of +12.3 &plusmn; 4.2 theorems across n=3 seeds (sign positive in every seed). A controlled diversity ablation pins the gain to <em>structural</em> guidance, not prompt diversity: paraphrased instructions match the baseline, irrelevant Lean comments actively degrade it. The phenomenon is RL-specific &mdash; the same model&rsquo;s non-RL base checkpoint proves zero theorems with or without skeletons, so RL is the locus of both the proof capability and the inference-time collapse that limits it.
+      RL-trained Lean theorem provers hit a sampling ceiling. On miniF2F-test, doubling DeepSeek-Prover-V1.5-RL&rsquo;s i.i.d.&nbsp;sampling budget from <code>k=32</code> to <code>k=64</code> adds zero new solved theorems: both budgets land at 42/244. A fixed schedule of 15 common tactic openings (<code>simp</code>, <code>intro</code>, <code>constructor</code>, &hellip;) breaks the plateau, with a mean gain of +12.3 &plusmn; 4.2 theorems across n=3 seeds (sign positive in every seed). A controlled diversity ablation pins the gain to <em>structural</em> guidance, not prompt diversity: paraphrased instructions match the baseline, irrelevant Lean comments actively degrade it. The phenomenon is RL-specific. The same model&rsquo;s non-RL base checkpoint proves zero theorems with or without skeletons, so RL is the locus of both the proof capability and the inference-time collapse that limits it.
     </p>
   </section>
 
@@ -239,13 +240,13 @@
       </thead>
       <tbody>
         <tr>
-          <td>A-RL &mdash; i.i.d. baseline</td>
+          <td>A-RL (i.i.d. baseline)</td>
           <td class="num">38/244 (15.6%)</td>
           <td class="num">42/244 (17.2%)</td>
           <td class="num">42/244 (17.2%)</td>
         </tr>
         <tr class="highlight">
-          <td>B-RL &mdash; skeleton schedule</td>
+          <td>B-RL (skeleton schedule)</td>
           <td class="num">55/244 (22.5%)</td>
           <td class="num">58/244 (23.8%)</td>
           <td class="num">60/244 (24.6%)</td>
@@ -278,11 +279,11 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>C2 &mdash; irrelevant Lean comments</td><td class="num">25/244</td><td class="num">10.2%</td></tr>
-        <tr><td>A-RL &mdash; i.i.d. baseline</td><td class="num">38/244</td><td class="num">15.6%</td></tr>
-        <tr><td>C1 &mdash; instruction paraphrases</td><td class="num">38/244</td><td class="num">15.6%</td></tr>
-        <tr><td>C3 &mdash; natural-language goal hints only</td><td class="num">48/244</td><td class="num">19.7%</td></tr>
-        <tr class="highlight"><td>B-RL &mdash; tactic skeletons</td><td class="num">55/244</td><td class="num">22.5%</td></tr>
+        <tr><td>C2 (irrelevant Lean comments)</td><td class="num">25/244</td><td class="num">10.2%</td></tr>
+        <tr><td>A-RL (i.i.d. baseline)</td><td class="num">38/244</td><td class="num">15.6%</td></tr>
+        <tr><td>C1 (instruction paraphrases)</td><td class="num">38/244</td><td class="num">15.6%</td></tr>
+        <tr><td>C3 (natural-language goal hints only)</td><td class="num">48/244</td><td class="num">19.7%</td></tr>
+        <tr class="highlight"><td>B-RL (tactic skeletons)</td><td class="num">55/244</td><td class="num">22.5%</td></tr>
       </tbody>
     </table>
     <p class="footnote">
@@ -292,7 +293,7 @@
     <ul class="findings">
       <li><strong>The phenomenon is RL-specific.</strong> The non-RL base checkpoint (V1.5-Base) proves 0/244 theorems at every k, with or without skeletons. RL creates both the proof capability and the inference-time collapse that limits it.</li>
       <li><strong>Distributional evidence.</strong> Across 13,159 stochastic samples, the median V1.5-RL theorem receives only 2 distinct first-tactic heads; 49% of the benchmark gets a deterministic single strategic opening.</li>
-      <li><strong>Cross-model contrast.</strong> RL-trained DeepSeek-Prover-V2-7B contributes +3 frontier theorems no i.i.d. baseline of any tested model reaches, despite a flat aggregate. SFT-trained Goedel-Prover loses &minus;10.0 &plusmn; 4.4 theorems across n=3 seeds (sign negative every seed) &mdash; the A&rarr;B intervention helps an RL prover and hurts an SFT prover.</li>
+      <li><strong>Cross-model contrast.</strong> RL-trained DeepSeek-Prover-V2-7B contributes +3 frontier theorems no i.i.d. baseline of any tested model reaches, despite a flat aggregate. SFT-trained Goedel-Prover loses &minus;10.0 &plusmn; 4.4 theorems across n=3 seeds (sign negative every seed). The A&rarr;B intervention helps an RL prover and hurts an SFT prover.</li>
     </ul>
   </section>
 
