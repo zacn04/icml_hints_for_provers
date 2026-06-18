@@ -10,10 +10,11 @@ import matplotlib
 matplotlib.rcParams['font.family'] = 'sans-serif'
 matplotlib.rcParams['font.sans-serif'] = ['Arial', 'Helvetica', 'DejaVu Sans']
 
-# Data from experiments
-BOTH = 34          # Solved by both methods
-ONLY_STRUCTURED = 19   # Solved only by Structured IR
-ONLY_BASELINE = 3      # Solved only by Baseline
+# Numbers from leanpaper/main.tex Section 4.5 (Solved-Set Overlap).
+# B-RL totals 55/244, A-RL totals 38/244 at k=16. Intersection = 35.
+BOTH = 35              # Solved by both A-RL and B-RL
+ONLY_STRUCTURED = 20   # Solved only by B-RL (skeleton schedule)
+ONLY_BASELINE = 3      # Solved only by A-RL (i.i.d. baseline)
 
 def create_venn_diagram(output_path: str = "venn_overlap"):
     """Create and save the Venn diagram."""
@@ -24,8 +25,8 @@ def create_venn_diagram(output_path: str = "venn_overlap"):
     # venn2 takes (Ab, aB, AB) = (only left, only right, both)
     v = venn2(
         subsets=(ONLY_STRUCTURED, ONLY_BASELINE, BOTH),
-        set_labels=('Structured IR', 'Baseline'),
-        set_colors=('#4C72B0', '#DD8452'),  # Seaborn-style blue and orange
+        set_labels=('B-RL (skeleton schedule)', 'A-RL (i.i.d. baseline)'),
+        set_colors=('#4C72B0', '#DD8452'),
         alpha=0.7,
         ax=ax
     )
@@ -50,36 +51,25 @@ def create_venn_diagram(output_path: str = "venn_overlap"):
             text.set_fontsize(14)
             text.set_fontweight('bold')
 
-    # Add totals annotation
+    # Totals
     ax.annotate(
-        f'Total: 53 (21.7%)',
+        'Total: 55 (22.5%)',
         xy=(-0.4, -0.55),
         fontsize=10,
         ha='center',
         color='#4C72B0'
     )
     ax.annotate(
-        f'Total: 37 (15.2%)',
+        'Total: 38 (15.6%)',
         xy=(0.4, -0.55),
         fontsize=10,
         ha='center',
         color='#DD8452'
     )
 
-    # Add statistical significance note
-    ax.annotate(
-        r"McNemar's test: $\chi^2$ = 10.23, p < 0.01",
-        xy=(0, -0.72),
-        fontsize=9,
-        ha='center',
-        style='italic',
-        color='#555555'
-    )
-
-    # Title
     ax.set_title(
-        'Theorem Solving Overlap on miniF2F (k=16)',
-        fontsize=13,
+        'Solved-set overlap on miniF2F-test (V1.5-RL, k=16)',
+        fontsize=12,
         fontweight='bold',
         pad=15
     )
@@ -101,7 +91,7 @@ def create_simple_venn(output_path: str = "venn_simple"):
 
     v = venn2(
         subsets=(ONLY_STRUCTURED, ONLY_BASELINE, BOTH),
-        set_labels=('Structured IR\n(53 solved)', 'Baseline\n(37 solved)'),
+        set_labels=('B-RL\n(55 solved)', 'A-RL\n(38 solved)'),
         set_colors=('#4C72B0', '#DD8452'),
         alpha=0.7,
         ax=ax

@@ -304,8 +304,13 @@
     </p>
 
     <figure>
+      <img src="figures/venn_overlap.png" alt="Venn diagram of solved theorems at k=16: B-RL solves 55 (20 unique), A-RL solves 38 (3 unique), intersection 35.">
+      <figcaption>Figure 2. Solved-set overlap at k=16. B-RL nearly Pareto-dominates A-RL: 20 theorems are solved only by B-RL, just 3 are solved only by A-RL.</figcaption>
+    </figure>
+
+    <figure>
       <img src="figures/ablation.png" alt="Bar chart showing solved theorems at k=16 for C2 (25), A-RL (38), C1 (38), C3 (48), B-RL (55), illustrating the C2 < A-RL = C1 < C3 < B-RL gradient.">
-      <figcaption>Figure 2. Structural-content gradient at k=16: irrelevant tokens hurt; pure paraphrase ties the baseline; NL goal hints recover most of the gap; tactic skeletons go furthest.</figcaption>
+      <figcaption>Figure 3. Structural-content gradient at k=16: irrelevant tokens hurt; pure paraphrase ties the baseline; NL goal hints recover most of the gap; tactic skeletons go furthest.</figcaption>
     </figure>
     <p>Diversity ablation at k=16 isolates structural content from prompt diversity:</p>
     <table>
@@ -327,6 +332,11 @@
     <p class="footnote">
       Clean structural-content gradient: C2 &lt; A-RL = C1 &lt; C3 &lt; B-RL. Irrelevant tokens hurt; pure paraphrase ties the baseline; NL hints alone recover roughly 58% of the A&rarr;B gap; tactic stems contribute the orthogonal remainder.
     </p>
+
+    <figure>
+      <img src="figures/per_skeleton.png" alt="Bar chart of per-skeleton contribution to B-RL k=16: empty skeleton 3.29 of 4.54 solves per shard, intros 0.62, simp 0.17, norm_num 0.17, others below 0.1.">
+      <figcaption>Figure 4. Per-skeleton contribution within B-RL k=16 (24 shards). The empty skeleton (no tactic prefix) carries most of the load; the other 14 skeletons together pick up the long tail, contributing the 17 theorems A-RL i.i.d. misses.</figcaption>
+    </figure>
 
     <ul class="findings">
       <li><strong>The phenomenon is RL-specific.</strong> The non-RL base checkpoint (V1.5-Base) proves 0/244 theorems at every k, with or without skeletons. RL creates both the proof capability and the inference-time collapse that limits it.</li>
