@@ -1,0 +1,18 @@
+# Core: needed to run experiments
+torch>=2.0
+transformers>=4.36
+accelerate>=0.20
+rich>=13.0
+pyyaml>=6.0
+
+# Analysis scripts
+numpy>=1.24
+scipy>=1.10
+
+# Figures
+matplotlib>=3.7
+matplotlib-venn>=0.11
+
+# Inference server (only needed on the GPU pod)
+vllm>=0.5
+huggingface_hub>=0.20

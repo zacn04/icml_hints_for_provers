@@ -1,15 +1,45 @@
-/.lake
-
-outputs/
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
 .venv/
-.env
+venv/
+.Python
+
+# Editors / OS
 .DS_Store
+.idea/
+.vscode/
+.claude/
+
+# Secrets
+.env
+.envrc
+
+# Experiment outputs (kept locally; not in git)
+outputs/
+outputs_*/
+pod_backup_*/
+*.tar.gz
+
+# Lean build artifacts
+.lake/
+build/
+
+# AzureML (legacy)
 .azureml/
 azureml/.azure/
-*.yml
-*.yaml
-.azuremlignore
-README_analysis.md
-/.lake
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+
+# Scratch
+Untitled-*
