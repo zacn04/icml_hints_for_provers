@@ -43,3 +43,6 @@ azureml/.azure/
 
 # Scratch
 Untitled-*
+
+# Local review-only staging (not for public repo)
+_archive/

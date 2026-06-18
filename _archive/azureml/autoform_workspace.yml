@@ -1,8 +1,0 @@
-$schema: https://azuremlschemas.azureedge.net/latest/workspace.schema.json
-name: AutoForm
-location: US
-display_name: autoform
-description: A workspace for experiments in automated theorem proving.
-tags:
-  purpose: testing
-  team: ws-management
