@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: deepseek-env
+version: 2
+description: DeepSeek-Prover GPU environment
+image: mcr.microsoft.com/azureml/openmpi4.1.0-cuda11.8-cudnn8-ubuntu20.04
+conda_file: conda.yaml
