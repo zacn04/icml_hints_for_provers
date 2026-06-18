@@ -1,0 +1,143 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{url}      % Useful for formatting URLs in bibtex
+
+\title{Structured Hints for Sample-Efficient Lean Theorem Proving}
+\author{Zac Burton}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+State-of-the-art neural theorem provers like DeepSeek-Prover-V1.5 combine large language models with reinforcement learning, achieving impressive results through sophisticated training. We ask: do these highly-trained models still benefit from simple structural guidance at inference time? We evaluate two lightweight interventions—tactic prefix injection and natural language hints—on the miniF2F benchmark. Surprisingly, cycling through 15 common tactic prefixes yields 21.7\% pass@16 compared to 15.2\% for standard sampling from the same model, a 43\% relative improvement. Our results suggest that even capable RL-trained provers underutilize structural priors available in the tactic language, and that simple inference-time guidance remains a cheap, complementary boost.
+\end{abstract}
+
+\section{Introduction}
+
+Recent advances in neural theorem proving have demonstrated remarkable success by combining Large Language Models (LLMs) with formal verification environments like Lean. Systems leveraging reinforcement learning (RL) and massive tree searches have achieved state-of-the-art results on competitive benchmarks such as the IMO and Putnam competitions \cite{xin2024deepseek, chen2025seed, trinh2024solving}. The prevailing paradigm often assumes that with sufficient RL training and inference-time compute, models will implicitly internalize the necessary structural and tactic-level priors required for formal proofs.
+
+However, despite these capabilities, neural provers remain surprisingly brittle. Even RL-trained models frequently fail due to low-level structural errors—generating invalid syntax, hallucinating identifiers, or getting "lost" in the proof state space—rather than a lack of mathematical insight. This disconnect raises a critical question for resource-constrained settings: \textit{Has RL actually solved the structural problem, or can lightweight, deterministic guidance still yield significant gains?}
+
+In this work, we investigate whether enforcing structural priors at inference time improves performance without increasing the compute budget. Unlike recent approaches that rely on expensive stochastic search or massive sampling (e.g., $k=1024$), we propose a lightweight, deterministic \textbf{Intermediate Representation (IR)} perturbation. By guiding the model with structural skeletons and goal hints, we probe the behavioral limits of current RL-trained provers.
+
+Our results on the \texttt{miniF2F} benchmark show that this simple structural guidance yields a \textbf{43\% relative improvement} over the baseline (15.16\% $\to$ 21.72\%) under a fixed, low-inference budget ($k=16$). Crucially, our error analysis reveals that these gains stem primarily from a reduction in syntax errors and unsolved goals, suggesting that current RL paradigms have not yet fully internalized the structural constraints of formal environments.
+
+\subsection{Contributions}
+Our primary contributions are as follows:
+\begin{itemize}
+    \item We introduce a deterministic, Lean-aware Intermediate Representation (IR) that provides structural guidance at inference time.
+    \item We demonstrate that this lightweight intervention significantly outperforms standard baselines on \texttt{miniF2F} without additional training or compute.
+    \item We provide a detailed failure-mode analysis, showing that structural guidance specifically mitigates syntax and validity errors, offering a complementary path to heavy-search methods.
+\end{itemize}
+
+\section{Related Work}
+
+\paragraph{Neural Theorem Proving}
+The integration of Language Models with formal proof assistants has evolved rapidly. Early systems like GPT-f \cite{polu2020generative} and PACT \cite{han2021proof} demonstrated that transformers could generate tactic scripts. More recent efforts, such as \textbf{LeanDojo} \cite{yang2023leandojo} and \textbf{ReProver}, introduced retrieval-augmented generation to handle the vast library of Lean premises. The current state-of-the-art is dominated by models trained with massive Reinforcement Learning (RL) pipelines, notably \textbf{DeepSeek-Prover-V1.5} \cite{xin2024deepseek} and \textbf{AlphaGeometry} \cite{trinh2024solving}, which rely on iterative self-improvement and synthetic data generation to achieve strong performance on formal benchmarks.
+
+\paragraph{Inference-Time Search \& Scaling}
+A dominant trend in recent literature is "inference-time scaling"—improving performance by increasing compute during generation rather than training. Methods like \textbf{HyperTree Proof Search} \cite{lample2022hypertree} and \textbf{COPRA} \cite{thakur2023copra} utilize extensive tree searches, often generating thousands of samples ($k=1024+$) to find a single valid proof path. While effective, these methods incur significant latency and computational costs, making them prohibitive for resource-constrained environments.
+
+\paragraph{Neuro-Symbolic Reasoning}
+Recent work has moved towards hybrid systems that interleave natural language reasoning with formal verification. \textbf{Aristotle} \cite{achim2025aristotle} achieved state-of-the-art results on IMO problems by generating and formalizing \textit{semantic lemmas} (intermediate mathematical statements) to bridge the gap between informal reasoning and formal proof.
+
+Our work targets a complementary, lower-level efficiency constraint. Rather than generating new mathematical lemmas (which requires heavy reasoning), we focus on \textit{syntactic skeletons}—enforcing valid tactic structures (e.g., \texttt{induction}, \texttt{cases}) at the start of generation. We demonstrate that this lightweight structural guidance captures significant performance gains in resource-constrained environments where full lemma synthesis is too costly.
+
+
+\section{Method}
+
+To evaluate the impact of structural guidance under strict inference constraints, we introduce a deterministic Intermediate Representation (IR). Unlike standard autoregressive generation which conditions solely on the theorem statement, our approach conditions the model on a structural tuple that explicitly separates proof planning from tactic execution.
+
+\subsection{Structured Intermediate Representation}
+Formally, let $\mathcal{T}$ be the space of theorem statements in Lean, and $\mathcal{P}$ be the space of valid tactic sequences. We define a \textbf{Structured Query} $q$ as a tuple:
+\begin{equation}
+    q = (x, s, h)
+\end{equation}
+where:
+\begin{itemize}
+    \item $x \in \mathcal{T}$ is the formal theorem statement (the goal).
+    \item $s \in \mathcal{S}$ is a \textit{tactic skeleton} (a prefix of tactics representing the high-level proof strategy, e.g., \texttt{intros, induction n}).
+    \item $h \in \mathcal{H} \cup \{\emptyset\}$ is an optional natural language \textit{goal hint} describing the target state.
+\end{itemize}
+
+The generation process is modeled as $P_{\theta}(y \mid x, s, h)$, where the model $\theta$ is constrained to complete the proof $y$ given the enforced structural start $s$ and semantic hint $h$. This effectively "locks" the model into a specific proof strategy before inference begins, reducing the search space of valid next tokens.
+
+\subsection{Deterministic Perturbation Schedule}
+Instead of relying on stochastic temperature sampling alone, we enforce diversity through a deterministic schedule. For a given theorem $x$, we generate a set of $k=16$ distinct queries $Q_x = \{q_1, \dots, q_{16}\}$ by iterating over a fixed set of common tactic skeletons (e.g., \texttt{induction}, \texttt{cases}, \texttt{by\_contra}).
+
+This schedule ensures that the model attempts a diverse range of proof strategies (e.g., proof by contradiction vs. direct induction) regardless of the model's internal probability distribution, which might otherwise collapse to a single, incorrect mode.
+
+\subsection{Experimental Setup \& Constraints}
+\label{sec:constraints}
+To strictly evaluate the model's structural efficiency without the confounding factor of massive search, we enforce strict computational constraints on all evaluations. Specifically, we limit generation to a maximum of \textbf{1024 tokens} and restrict sampling to $k=16$ attempts per theorem.
+
+While recent benchmarks often utilize significantly larger budgets (e.g., $k=1024$, extended context windows), these approaches are computationally prohibitive for many practical applications. Our experimental design explicitly targets this resource-constrained regime to evaluate whether structural guidance can recover performance lost to limited compute. As such, our baseline results reflect this strict cutoff and should be interpreted as a \textit{low-latency performance floor}, rather than a ceiling of model capability.
+
+
+\section{Results}
+
+We evaluate the effectiveness of our approach on the \texttt{miniF2F-test} benchmark (Lean split), consisting of 244 formal theorems. We compare our Structured Intermediate Representation (IR) against the unguided Baseline under identical inference constraints ($k=16$, max\_tokens=1024).
+
+\subsection{Main Performance}
+Table \ref{tab:main_results} summarizes the pass rates. Our structured approach solves 53 theorems (21.72\%), compared to 37 theorems (15.16\%) for the baseline. This represents a net absolute gain of 6.56 percentage points and a \textbf{relative improvement of 43.2\%}.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{lccc}
+        \hline
+        \textbf{Method} & \textbf{Solved (N)} & \textbf{Pass@16 (\%)} & \textbf{Relative Gain} \\
+        \hline
+        Baseline (Unguided) & 37 / 244 & 15.16\% & - \\
+        \textbf{Structured IR (Ours)} & \textbf{53 / 244} & \textbf{21.72\%} & \textbf{+43.2\%} \\
+        \hline
+    \end{tabular}
+    \caption{Performance comparison on miniF2F-test. Both methods use DeepSeek-Prover-V1.5-RL with $k=16$ samples and a strict 1024-token limit.}
+    \label{tab:main_results}
+\end{table}
+
+\subsection{Paired Analysis \& Overlap}
+To understand whether our method simply solves a different subset of problems or strictly improves upon the baseline, we conducted a paired analysis of solved theorems (Figure \ref{fig:venn_breakdown}).
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.65\textwidth]{figures/venn_overlap.pdf}
+    \caption{Overlap of solved theorems. Structured hints uniquely solve 19 theorems that the baseline fails on, while only 3 theorems are uniquely solved by the baseline. McNemar's test confirms statistical significance ($\chi^2 = 10.23$, $p < 0.01$).}
+    \label{fig:venn_breakdown}
+\end{figure}
+
+\begin{itemize}
+    \item \textbf{Intersection (Both Solved):} 34 theorems were solved by both methods.
+    \item \textbf{Structured-Only Wins:} Our method solved \textbf{19} theorems that the baseline failed to solve.
+    \item \textbf{Baseline-Only Wins:} The baseline solved only \textbf{3} theorems that our method missed.
+\end{itemize}
+
+This strong asymmetry (19 wins vs. 3 losses) indicates that structural guidance does not merely trade off one type of reasoning for another; rather, it strictly dominates the unguided approach in this resource-constrained regime. McNemar's test on the paired binary outcomes confirms statistical significance ($\chi^2 = 10.23$, $p < 0.01$).
+
+\subsection{Failure Mode Analysis}
+We analyzed the compilation logs for the failed attempts. The primary source of improvement in the Structured IR was a significant reduction in \texttt{syntax\_error} and \texttt{unsolved\_goals} messages.
+
+By enforcing a valid tactic skeleton at the start of generation, the model effectively bypasses the "cold start" problem, where RL-trained models often waste tokens hallucinating invalid tactic names or getting stuck in loops before attempting a valid proof strategy. The reduction in these elementary errors suggests that the gains proceed from improved \textit{structural validity} rather than an increase in the model's underlying mathematical knowledge.
+
+
+\section{Discussion}
+Our findings challenge the assumption that "more scale" is the only path to better theorem proving. By simply enforcing valid structural priors—specifically, valid tactic skeletons—we achieved a \textbf{43\% relative improvement} in pass rate.
+
+This result highlights a critical inefficiency in current RL-trained models: they still squander significant inference budget on syntax errors and invalid tactic applications. The model effectively "knows" the math but often fails to format the proof correctly before running out of tokens. Our Intermediate Representation (IR) acts as a scaffold, allowing the model to focus its limited context window on the logical content rather than the structural boilerplate.
+
+Furthermore, under the strict constraint ($k=16$, 1024 tokens), our method strictly dominates the unguided baseline (19 unique solves vs. 3). This suggests that for resource-constrained applications—where massive tree search is infeasible—structural guidance is a far more efficient lever than raw sampling.
+
+\section{Limitations \& Future Work}
+The primary limitation of this study is the strict computational budget. Due to resource constraints, we limited generation to 1024 tokens, which likely truncated valid proofs that required verbose Lean states. While this serves as a rigorous test of low-latency performance, it prevents a direct comparison with state-of-the-art leaderboards that utilize extended context windows and massive sampling ($k > 1000$).
+
+Future work will explore two directions:
+\begin{itemize}
+    \item \textbf{Scaling the IR:} Investigating whether this structural guidance continues to provide gains when scaled to larger budgets (e.g., $k=128$) or stronger base models.
+    \item \textbf{Dynamic Skeletons:} Currently, our tactic skeletons are fixed. A learned "skeleton retriever" that dynamically predicts the best structure for a given theorem could further refine the query generation process.
+\end{itemize}
+
+\bibliographystyle{acm}
+\bibliography{refs}
+
+\end{document}

@@ -1,0 +1,57 @@
+  $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+
+  code: ../../azure_job/
+
+  command: >
+    set -e &&
+
+    git config --global core.fsmonitor false &&
+    git config --global core.untrackedCache false &&
+
+    pip install rich pyyaml torch transformers accelerate sentencepiece &&
+    curl -fsSL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y &&
+    export PATH="$HOME/.elan/bin:$PATH" &&
+
+    cd lean &&
+    lake update &&
+    lake build &&
+    cd .. &&
+
+    python run.py \
+      --benchmark ${{inputs.benchmark}} \
+      --model ${{inputs.model}} \
+      --baseline ${{inputs.baseline}} \
+      --k ${{inputs.k}} \
+      --timeout ${{inputs.timeout}} \
+      --seed ${{inputs.seed}} \
+      --shard ${{inputs.shard}} \
+      --num-shards ${{inputs.num_shards}} \
+      --limit ${{inputs.limit}} \
+      --output-root outputs
+
+
+
+  environment: azureml://registries/azureml/environments/acpt-pytorch-2.2-cuda12.1/labels/latest
+  compute: azureml:aml-gpu-cluster 
+
+  environment_variables:
+    HF_TOKEN: ${{HF_TOKEN}}
+  inputs:
+    benchmark:
+      type: uri_file
+    model:
+      type: string
+    baseline:
+      type: string
+    k:
+      type: integer
+    timeout:
+      type: integer
+    seed:
+      type: integer
+    shard:
+      type: integer
+    num_shards:
+      type: integer
+    limit:
+      type: integer

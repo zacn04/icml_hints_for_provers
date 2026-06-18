@@ -1,0 +1,29 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+name: ir-search-v0
+display_name: ir-search-v0
+experiment_name: ir-search
+
+code: ../
+command: >-
+  bash -c "
+    # Install Lean 4 via elan
+    if ! command -v lean &> /dev/null; then
+      echo 'Installing Lean 4...'
+      curl https://raw.githubusercontent.com/leanprover/lean4/master/elan-init.sh -sSf | sh -s -- -y
+      export PATH=\"\$HOME/.elan/bin:\$PATH\"
+      source \$HOME/.elan/env 2>/dev/null || true
+    fi
+    # Verify and run
+    lean --version
+    python run.py --config configs/ir_search.yaml
+  "
+
+environment:
+  conda_file: conda.yaml
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+
+compute: azureml:REPLACE_WITH_CLUSTER_NAME
+
+resources:
+  instance_count: 1
