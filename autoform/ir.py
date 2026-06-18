@@ -13,6 +13,7 @@ class PerturbMode(enum.Enum):
     SKELETON = "skeleton"
     PARAPHRASE = "paraphrase"
     COMMENT = "comment"
+    GOAL_HINT_ONLY = "goal_hint"  # NL tactic-suggestion comment, empty tactic prefix
 
 
 @dataclass(frozen=True)
@@ -140,6 +141,17 @@ def perturb(
                 tactic_prefix=(),
                 goal_hint=None,
                 comment_prefix=comment,
+            )
+
+        elif mode == PerturbMode.GOAL_HINT_ONLY:
+            # Cycle through the 7 NON-EMPTY goal-hint comments with empty tactic prefix.
+            # Skip GOAL_HINTS[0] (None) so every attempt has a real hint comment.
+            non_empty = [h for h in GOAL_HINTS if h is not None]
+            hint = non_empty[i % len(non_empty)]
+            ir = IR(
+                theorem=base.theorem,
+                tactic_prefix=(),
+                goal_hint=hint,
             )
 
         variants.append(ir)

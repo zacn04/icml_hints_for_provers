@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-BENCHMARK="azure_job/benchmarks/minif2f.jsonl"
+BENCHMARK="benchmarks/minif2f.jsonl"
 PROVIDER="openai_compat"
 BASE_URL=""
 TIMEOUT=120
@@ -52,7 +52,7 @@ echo "=== $CONDITION: $BASELINE/$PERTURBATION pass@${K} (${NUM_SHARDS} shards) =
 
 PIDS=()
 for SHARD in $(seq 0 $((NUM_SHARDS - 1))); do
-    python3 azure_job/run.py \
+    python3 run.py \
         --benchmark "$BENCHMARK" --model "$MODEL" \
         --baseline "$BASELINE" --perturbation "$PERTURBATION" \
         --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \

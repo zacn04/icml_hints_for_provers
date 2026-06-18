@@ -92,12 +92,92 @@ The theorem is:
     return prompt
 
 
-def ir_to_prompt(ir: IR, model_name: str) -> str:
+def _prompt_deepseekv2_chat(ir: IR) -> tuple[list[dict], str]:
+    """
+    DeepSeek-Prover-V2 uses chat format with a proof-plan preamble.
+    Returns (messages, raw_user_text) for chat completions endpoint.
+    """
+    theorem = ir.theorem.rstrip()
+    if theorem.endswith(":= by"):
+        theorem = theorem[:-5].rstrip()
+
+    if ir.tactic_prefix:
+        tactics_str = "\n  ".join(ir.tactic_prefix)
+        skeleton_note = f"\n\nBegin the proof with:\n  {tactics_str}"
+    else:
+        skeleton_note = ""
+
+    user_msg = (
+        "Complete the following Lean 4 code:\n\n"
+        "```lean4\n"
+        "import Mathlib\n"
+        "open BigOperators Real Nat Topology\n\n"
+        f"{theorem} := by\n"
+        "  sorry\n"
+        "```\n\n"
+        "Before producing the Lean 4 code to formally prove the given theorem, "
+        "provide a detailed proof plan outlining the main proof steps and strategies."
+        f"{skeleton_note}"
+    )
+    messages = [{"role": "user", "content": user_msg}]
+    return messages, user_msg
+
+
+def _prompt_kimina_chat(ir: IR) -> tuple[list[dict], str]:
+    """
+    Kimina-Prover uses Qwen-style chat with a system message.
+    Returns (messages, raw_user_text) for chat completions endpoint.
+    """
+    theorem = ir.theorem.rstrip()
+    if theorem.endswith(":= by"):
+        theorem = theorem[:-5].rstrip()
+
+    if ir.tactic_prefix:
+        tactics_str = "\n  ".join(ir.tactic_prefix)
+        skeleton_note = f"\n\nBegin the tactic proof with:\n  {tactics_str}"
+    else:
+        skeleton_note = ""
+
+    system_msg = "You are an expert in mathematics and Lean 4."
+    user_msg = (
+        "Think about and solve the following problem step by step in Lean 4.\n\n"
+        "# Formal statement:\n"
+        "```lean4\n"
+        "import Mathlib\n"
+        "open BigOperators Real Nat Topology\n\n"
+        f"{theorem} := by\n"
+        "  sorry\n"
+        f"```{skeleton_note}"
+    )
+    messages = [
+        {"role": "system", "content": system_msg},
+        {"role": "user", "content": user_msg},
+    ]
+    return messages, user_msg
+
+
+def _is_chat_model(model_name: str) -> bool:
+    """Whether this model needs the chat completions endpoint."""
+    if "DeepSeek-Prover-V2" in model_name:
+        return True
+    if "Kimina" in model_name:
+        return True
+    return False
+
+
+def ir_to_prompt(ir: IR, model_name: str) -> str | tuple[list[dict], str]:
     """
     Dispatch based on model name.
+    Returns a string for completion models, or (messages, user_text) for chat models.
     """
+    if "DeepSeek-Prover-V2" in model_name:
+        return _prompt_deepseekv2_chat(ir)
     if "DeepSeek-Prover" in model_name:
         return _prompt_deepseek_completion(ir)
+    if "Goedel-Prover" in model_name:
+        return _prompt_deepseek_completion(ir)
+    if "Kimina" in model_name:
+        return _prompt_kimina_chat(ir)
     return _prompt_standard_chat(ir)
 
 
@@ -106,15 +186,33 @@ def ir_to_prompt(ir: IR, model_name: str) -> str:
 # ---------------------------------------------------------
 
 def _clean_model_output(proof_body: str) -> str:
-    proof_body = proof_body.strip()
+    # Preserve leading indentation (Model._sanitize_output already
+    # re-indents reasoning-model bodies by 2 spaces so they sit inside
+    # the `by` block); only strip trailing whitespace.
+    proof_body = proof_body.rstrip()
 
-    # Handle case where model hallucinates a full new prompt+proof
-    # Extract proof from the LAST `:= by` block
-    if ":= by" in proof_body:
-        # Find last occurrence of := by
-        last_by_idx = proof_body.rfind(":= by")
-        if last_by_idx != -1:
-            proof_body = proof_body[last_by_idx + 5:].strip()
+    # Handle case where model hallucinates a full new prompt+proof.
+    # Only strip a theorem signature if the body actually STARTS with one —
+    # `rfind(":= by")` would otherwise wrongly match nested
+    # `have h : ... := by tac` statements inside a reasoning model's
+    # already-sanitized proof body.
+    import re as _re
+    if _re.match(r"\s*(theorem|lemma|example)\b", proof_body):
+        # Find the FIRST `:= by` at bracket depth 0 (the theorem-level
+        # boundary), matching the logic in Model._sanitize_output.
+        depth = 0
+        i = 0
+        n = len(proof_body)
+        while i < n - 4:
+            c = proof_body[i]
+            if c in "([{":
+                depth += 1
+            elif c in ")]}":
+                depth -= 1
+            elif depth == 0 and proof_body.startswith(":= by", i):
+                proof_body = proof_body[i + len(":= by"):].lstrip("\n").strip()
+                break
+            i += 1
 
     # Cut at ### (explanation/new prompt boundary) AFTER extracting
     if "###" in proof_body:
@@ -134,6 +232,19 @@ def _clean_model_output(proof_body: str) -> str:
     elif proof_body.startswith("by\n"):
         proof_body = proof_body[3:].strip()
 
+    # Final guard: ensure the body is indented so it sits inside the
+    # theorem's `by` block. If min-indent is 0, shift ALL non-blank lines
+    # right by 2 spaces (preserving relative indentation of nested
+    # `have`/`by` blocks). Lean rejects bodies at column 0.
+    if proof_body:
+        lines = proof_body.split("\n")
+        non_blank = [l for l in lines if l.strip()]
+        if non_blank:
+            min_indent = min(len(l) - len(l.lstrip()) for l in non_blank)
+            if min_indent == 0:
+                lines = ["  " + l if l.strip() else l for l in lines]
+                proof_body = "\n".join(lines)
+
     return proof_body
 
 
@@ -152,10 +263,13 @@ def _reconstruct_full_proof(ir: IR, raw_body: str, model_name: str) -> str:
     # This is a naive check; for production, you might want more robust overlapping.
     prefix_str = "\n".join(ir.tactic_prefix)
     
-    if "DeepSeek-Prover" in model_name:
-        # DeepSeek completion mode: The prompt ENDED with the prefix. 
+    if "DeepSeek-Prover" in model_name and "V2" not in model_name:
+        # DeepSeek V1.5 completion mode: The prompt ENDED with the prefix.
         # The model output implies continuation.
         # We need to stitch them: prefix + clean_body
+        final_tactics = f"{prefix_str}\n{clean_body}" if prefix_str else clean_body
+    elif "Goedel-Prover" in model_name:
+        # Goedel uses same completion format as DeepSeek V1.5
         final_tactics = f"{prefix_str}\n{clean_body}" if prefix_str else clean_body
     else:
         # Chat mode: We asked it to "Complete the proof".
@@ -221,11 +335,18 @@ def run_search(
     if log_dir:
         log_dir.mkdir(parents=True, exist_ok=True)
 
+    chat_mode = _is_chat_model(model_name)
+
     for attempt_idx, ir in enumerate(variants):
-        prompt = ir_to_prompt(ir, model_name)
+        prompt_result = ir_to_prompt(ir, model_name)
 
         llm_calls += 1
-        proof_body = model.generate(prompt=prompt, seed=seed)
+        if chat_mode:
+            messages, prompt_text = prompt_result
+            proof_body = model.generate_chat(messages=messages, seed=seed)
+        else:
+            prompt_text = prompt_result
+            proof_body = model.generate(prompt=prompt_text, seed=seed)
 
         if log_dir:
             log_entry = {
@@ -235,7 +356,7 @@ def run_search(
                 "goal_hint": ir.goal_hint,
                 "instruction": ir.instruction,
                 "comment_prefix": ir.comment_prefix,
-                "prompt": prompt,
+                "prompt": prompt_text,
                 "raw_output": proof_body,
                 "seed": seed,
             }
@@ -316,9 +437,15 @@ def run_oneshot(
     if log_dir:
         log_dir.mkdir(parents=True, exist_ok=True)
     
-    prompt = ir_to_prompt(base, model_name)
-    proof_body = model.generate(prompt=prompt, seed=seed)
-    
+    chat_mode = _is_chat_model(model_name)
+    prompt_result = ir_to_prompt(base, model_name)
+    if chat_mode:
+        messages, prompt_text = prompt_result
+        proof_body = model.generate_chat(messages=messages, seed=seed)
+    else:
+        prompt_text = prompt_result
+        proof_body = model.generate(prompt=prompt_text, seed=seed)
+
     # Save prompt and output
     if log_dir:
         log_entry = {
@@ -326,13 +453,13 @@ def run_oneshot(
             "theorem": base.theorem,
             "tactic_prefix": list(base.tactic_prefix),
             "goal_hint": base.goal_hint,
-            "prompt": prompt,
+            "prompt": prompt_text,
             "raw_output": proof_body,
             "seed": seed,
         }
         with open(log_dir / "attempt_000.json", "w") as f:
             json.dump(log_entry, f, indent=2)
-    
+
     full_proof = _reconstruct_full_proof(base, proof_body, model_name)
     
     if log_dir:
@@ -382,11 +509,18 @@ def run_sample_k(
     attempts = 0
     llm_calls = 0
 
+    chat_mode = _is_chat_model(model_name)
+
     for i in range(k):
-        prompt = ir_to_prompt(base, model_name)
+        prompt_result = ir_to_prompt(base, model_name)
         llm_calls += 1
-        proof_body = model.generate(prompt=prompt, seed=seed + i)
-        
+        if chat_mode:
+            messages, prompt_text = prompt_result
+            proof_body = model.generate_chat(messages=messages, seed=seed + i)
+        else:
+            prompt_text = prompt_result
+            proof_body = model.generate(prompt=prompt_text, seed=seed + i)
+
         # Save prompt and output
         if log_dir:
             log_entry = {
@@ -394,7 +528,7 @@ def run_sample_k(
                 "theorem": base.theorem,
                 "tactic_prefix": list(base.tactic_prefix),
                 "goal_hint": base.goal_hint,
-                "prompt": prompt,
+                "prompt": prompt_text,
                 "raw_output": proof_body,
                 "seed": seed + i,
             }

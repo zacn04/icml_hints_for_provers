@@ -5,14 +5,14 @@
 #   bash scripts/run_all_experiments.sh [--dry-run] [--benchmark PATH] [--provider PROVIDER] [--base-url URL]
 #
 # Defaults:
-#   benchmark: azure_job/benchmarks/minif2f.jsonl
+#   benchmark: benchmarks/minif2f.jsonl
 #   provider:  openai_compat
 #   base-url:  (reads from VLLM_BASE_URL env var)
 
 set -euo pipefail
 
 DRY_RUN=false
-BENCHMARK="azure_job/benchmarks/minif2f.jsonl"
+BENCHMARK="benchmarks/minif2f.jsonl"
 PROVIDER="openai_compat"
 BASE_URL=""
 TIMEOUT=120
@@ -67,14 +67,14 @@ echo ""
 # -----------------------------------------------
 for K in 16 32 64 128; do
     run_cmd "Exp1: A-RL sample pass@${K}" \
-        python3 azure_job/run.py \
+        python3 run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_RL" \
             --baseline sample --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \
             --condition "A-RL" --output-root "$OUTPUT_ROOT"
 
     run_cmd "Exp1: B-RL structured/skeleton pass@${K}" \
-        python3 azure_job/run.py \
+        python3 run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_RL" \
             --baseline structured --perturbation skeleton --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \
@@ -87,14 +87,14 @@ done
 # -----------------------------------------------
 for K in 16 32 64; do
     run_cmd "Exp2: A-BASE sample pass@${K}" \
-        python3 azure_job/run.py \
+        python3 run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_BASE" \
             --baseline sample --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \
             --condition "A-BASE" --output-root "$OUTPUT_ROOT"
 
     run_cmd "Exp2: B-BASE structured/skeleton pass@${K}" \
-        python3 azure_job/run.py \
+        python3 run.py \
             --benchmark "$BENCHMARK" --model "$MODEL_BASE" \
             --baseline structured --perturbation skeleton --k "$K" --timeout "$TIMEOUT" --seed "$SEED" \
             --provider "$PROVIDER" $BASE_URL_FLAG \
@@ -106,14 +106,14 @@ done
 # C1: paraphrase, C2: comment
 # -----------------------------------------------
 run_cmd "Exp3: C1 structured/paraphrase pass@16" \
-    python3 azure_job/run.py \
+    python3 run.py \
         --benchmark "$BENCHMARK" --model "$MODEL_RL" \
         --baseline structured --perturbation paraphrase --k 16 --timeout "$TIMEOUT" --seed "$SEED" \
         --provider "$PROVIDER" $BASE_URL_FLAG \
         --condition "C1" --output-root "$OUTPUT_ROOT"
 
 run_cmd "Exp3: C2 structured/comment pass@16" \
-    python3 azure_job/run.py \
+    python3 run.py \
         --benchmark "$BENCHMARK" --model "$MODEL_RL" \
         --baseline structured --perturbation comment --k 16 --timeout "$TIMEOUT" --seed "$SEED" \
         --provider "$PROVIDER" $BASE_URL_FLAG \

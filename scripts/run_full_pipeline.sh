@@ -11,7 +11,7 @@ MODEL_RL="deepseek-ai/DeepSeek-Prover-V1.5-RL"
 MODEL_BASE="deepseek-ai/DeepSeek-Prover-V1.5"
 PROVIDER="openai_compat"
 
-cd /home/ubuntu/autoform
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
 start_vllm() {
     local model="$1"

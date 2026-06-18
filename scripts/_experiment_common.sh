@@ -3,7 +3,7 @@
 # Source this, don't run it directly.
 
 DRY_RUN=false
-BENCHMARK="azure_job/benchmarks/minif2f.jsonl"
+BENCHMARK="benchmarks/minif2f.jsonl"
 PROVIDER="openai_compat"
 BASE_URL=""
 TIMEOUT=120

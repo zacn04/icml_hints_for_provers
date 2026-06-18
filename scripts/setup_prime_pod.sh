@@ -40,12 +40,12 @@ echo "  Lean version: $(lean --version 2>/dev/null || echo 'installed')"
 # 3. Build Lean project (mathlib cache)
 # -------------------------------------------
 echo "[3/5] Building Lean project (this takes a while on first run)..."
-cd azure_job/lean
+cd lean
 lake update
 # Try to fetch cached oleans to avoid full rebuild
 lake exe cache get 2>/dev/null || true
 lake build
-cd ../..
+cd ..
 echo "  Lean project built."
 
 # -------------------------------------------

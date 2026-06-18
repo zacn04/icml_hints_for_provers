@@ -114,7 +114,7 @@ def parse_args() -> argparse.Namespace:
     # Perturbation mode (only for --baseline structured)
     ap.add_argument(
         "--perturbation",
-        choices=["skeleton", "paraphrase", "comment"],
+        choices=["skeleton", "paraphrase", "comment", "goal_hint"],
         default="skeleton",
     )
 
@@ -129,6 +129,8 @@ def parse_args() -> argparse.Namespace:
     # Limits / output
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--output-root", default="outputs")
+    ap.add_argument("--max-tokens", type=int, default=1024,
+                    help="Max output tokens (bump for reasoning models like V2/Kimina)")
 
     return ap.parse_args()
 
@@ -207,7 +209,7 @@ def main() -> int:
         provider=args.provider,
         name=args.model,
         temperature=temp,
-        max_tokens=1024,
+        max_tokens=args.max_tokens,
         base_url=args.base_url,
     )
 
