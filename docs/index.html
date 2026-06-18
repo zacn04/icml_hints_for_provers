@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inference-Time Diversity in RL-Trained Lean Theorem Provers</title>
+<meta name="description" content="ICML 2026 AI for Math workshop paper. A diagnostic study of mode collapse in RL-trained Lean theorem provers, and a 15-skeleton schedule that breaks the inference-time plateau on miniF2F-test.">
+<meta name="author" content="Zachary Burton">
+<meta property="og:title" content="Inference-Time Diversity in RL-Trained Lean Theorem Provers">
+<meta property="og:description" content="ICML 2026 AI for Math workshop paper. A diagnostic study of mode collapse in RL-trained Lean theorem provers.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://zacn04.github.io/icml_hints_for_provers/">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafaf8;
+    --fg: #1a1a1a;
+    --muted: #6b6b6b;
+    --rule: #e8e7e2;
+    --card: #ffffff;
+    --code-bg: #f4f3ee;
+    --link: #0a3d62;
+    --link-hover: #062a47;
+    --accent-bg: #f8f5e8;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+    font-size: 19px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 5rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  h1 {
+    font-weight: 600;
+    font-size: 2.4rem;
+    line-height: 1.15;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 1.15rem;
+    margin: 0 0 1.2rem;
+    font-weight: 400;
+  }
+  .author {
+    font-size: 1.05rem;
+    margin: 0;
+  }
+  .affil {
+    font-size: 0.92rem;
+    color: var(--muted);
+    margin: 0.15rem 0 0;
+    font-style: italic;
+  }
+  .venue {
+    margin: 1.4rem 0 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .buttons {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1.4rem;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1.15rem;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--card);
+    color: var(--fg);
+    text-decoration: none;
+    font-size: 0.98rem;
+    font-family: inherit;
+    transition: border-color .15s, color .15s, background .15s;
+  }
+  .btn:hover {
+    border-color: var(--link);
+    color: var(--link);
+    background: var(--card);
+  }
+  section { margin-top: 3rem; }
+  h2 {
+    font-weight: 500;
+    font-size: 1.4rem;
+    margin: 0 0 1rem;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.35rem;
+    letter-spacing: 0.005em;
+  }
+  .tldr {
+    background: var(--card);
+    border-left: 3px solid var(--link);
+    padding: 0.95rem 1.25rem;
+    font-style: italic;
+    color: #2a2a2a;
+    margin: 1.5rem 0;
+    border-radius: 0 4px 4px 0;
+  }
+  p, ul { margin: 0.8rem 0; }
+  a {
+    color: var(--link);
+    text-decoration: none;
+    border-bottom: 1px solid #c7d6e2;
+    transition: color .15s, border-color .15s;
+  }
+  a:hover { color: var(--link-hover); border-bottom-color: var(--link); }
+  .btn { border-bottom: 1px solid var(--rule); }
+  .btn:hover { border-bottom-color: var(--link); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.86rem;
+    margin: 1rem 0;
+    background: var(--card);
+  }
+  thead th {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--rule);
+    font-weight: 500;
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  tbody td {
+    text-align: left;
+    padding: 0.55rem 0.7rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.highlight td { background: var(--accent-bg); font-weight: 500; }
+  pre {
+    background: var(--code-bg);
+    padding: 1rem 1.15rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.84rem;
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    line-height: 1.55;
+    margin: 0.8rem 0;
+    border: 1px solid var(--rule);
+  }
+  code {
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 0.08em 0.32em;
+    border-radius: 3px;
+  }
+  pre code { background: transparent; padding: 0; font-size: 1em; }
+  ul.findings { padding-left: 1.2rem; }
+  ul.findings li { margin: 0.6rem 0; }
+  ul.findings strong { font-weight: 600; }
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.88rem;
+  }
+  .footnote {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-top: 0.4rem;
+  }
+  @media (max-width: 540px) {
+    main { padding: 2.5rem 1.1rem 3rem; }
+    h1 { font-size: 1.85rem; }
+    body { font-size: 18px; }
+    table { font-size: 0.78rem; }
+    pre { font-size: 0.78rem; padding: 0.85rem 0.95rem; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Inference-Time Diversity in RL-Trained Lean Theorem Provers</h1>
+    <p class="subtitle">A Diagnostic Study</p>
+    <p class="author">Zachary Burton</p>
+    <p class="affil">MIT &rsquo;26</p>
+    <p class="venue">ICML 2026 &middot; AI for Math Workshop</p>
+    <nav class="buttons">
+      <a class="btn" href="https://arxiv.org/abs/2601.16172">arXiv</a>
+      <a class="btn" href="https://github.com/zacn04/icml_hints_for_provers">Code</a>
+      <a class="btn" href="https://icml.cc/virtual/2026/82534">ICML page</a>
+    </nav>
+  </header>
+
+  <p class="tldr">
+    RL-trained Lean theorem provers run out of ideas as you sample more &mdash; a fixed schedule of 15 tactic skeletons closes the gap, and the effect is RL-specific.
+  </p>
+
+  <section>
+    <h2>Summary</h2>
+    <p>
+      RL-trained Lean theorem provers hit a sampling ceiling. On miniF2F-test, doubling DeepSeek-Prover-V1.5-RL&rsquo;s i.i.d.&nbsp;sampling budget from <code>k=32</code> to <code>k=64</code> adds zero new solved theorems &mdash; both budgets land at 42/244. A fixed schedule of 15 common tactic openings (<code>simp</code>, <code>intro</code>, <code>constructor</code>, &hellip;) breaks the plateau, with a mean gain of +12.3 &plusmn; 4.2 theorems across n=3 seeds (sign positive in every seed). A controlled diversity ablation pins the gain to <em>structural</em> guidance, not prompt diversity: paraphrased instructions match the baseline, irrelevant Lean comments actively degrade it. The phenomenon is RL-specific &mdash; the same model&rsquo;s non-RL base checkpoint proves zero theorems with or without skeletons, so RL is the locus of both the proof capability and the inference-time collapse that limits it.
+    </p>
+  </section>
+
+  <section>
+    <h2>Results</h2>
+    <p>Scaling on miniF2F-test (244 theorems) with DeepSeek-Prover-V1.5-RL:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Condition</th>
+          <th class="num">k=16</th>
+          <th class="num">k=32</th>
+          <th class="num">k=64</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A-RL &mdash; i.i.d. baseline</td>
+          <td class="num">38/244 (15.6%)</td>
+          <td class="num">42/244 (17.2%)</td>
+          <td class="num">42/244 (17.2%)</td>
+        </tr>
+        <tr class="highlight">
+          <td>B-RL &mdash; skeleton schedule</td>
+          <td class="num">55/244 (22.5%)</td>
+          <td class="num">58/244 (23.8%)</td>
+          <td class="num">60/244 (24.6%)</td>
+        </tr>
+        <tr>
+          <td>Absolute gap</td>
+          <td class="num">+17</td>
+          <td class="num">+16</td>
+          <td class="num">+18</td>
+        </tr>
+        <tr>
+          <td>Relative gain</td>
+          <td class="num">+44.7%</td>
+          <td class="num">+38.1%</td>
+          <td class="num">+42.9%</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="footnote">
+      Paper Table 1 (single-seed headline numbers). The abstract reports the across-seed mean &Delta; = +12.3 &plusmn; 4.2 theorems at k=16, n=3 seeds, sign preserved in every seed.
+    </p>
+
+    <p>Diversity ablation at k=16 isolates structural content from prompt diversity:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Condition</th>
+          <th class="num">Solved</th>
+          <th class="num">Pass@16</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>C2 &mdash; irrelevant Lean comments</td><td class="num">25/244</td><td class="num">10.2%</td></tr>
+        <tr><td>A-RL &mdash; i.i.d. baseline</td><td class="num">38/244</td><td class="num">15.6%</td></tr>
+        <tr><td>C1 &mdash; instruction paraphrases</td><td class="num">38/244</td><td class="num">15.6%</td></tr>
+        <tr><td>C3 &mdash; natural-language goal hints only</td><td class="num">48/244</td><td class="num">19.7%</td></tr>
+        <tr class="highlight"><td>B-RL &mdash; tactic skeletons</td><td class="num">55/244</td><td class="num">22.5%</td></tr>
+      </tbody>
+    </table>
+    <p class="footnote">
+      Clean structural-content gradient: C2 &lt; A-RL = C1 &lt; C3 &lt; B-RL. Irrelevant tokens hurt; pure paraphrase ties the baseline; NL hints alone recover roughly 58% of the A&rarr;B gap; tactic stems contribute the orthogonal remainder.
+    </p>
+
+    <ul class="findings">
+      <li><strong>The phenomenon is RL-specific.</strong> The non-RL base checkpoint (V1.5-Base) proves 0/244 theorems at every k, with or without skeletons. RL creates both the proof capability and the inference-time collapse that limits it.</li>
+      <li><strong>Distributional evidence.</strong> Across 13,159 stochastic samples, the median V1.5-RL theorem receives only 2 distinct first-tactic heads; 49% of the benchmark gets a deterministic single strategic opening.</li>
+      <li><strong>Cross-model contrast.</strong> RL-trained DeepSeek-Prover-V2-7B contributes +3 frontier theorems no i.i.d. baseline of any tested model reaches, despite a flat aggregate. SFT-trained Goedel-Prover loses &minus;10.0 &plusmn; 4.4 theorems across n=3 seeds (sign negative every seed) &mdash; the A&rarr;B intervention helps an RL prover and hurts an SFT prover.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Reproduce</h2>
+    <p>Setup (Python 3.10 + Lean 4.9.0-rc1, the toolchain V1.5 was trained on):</p>
+    <pre><code># 1. Python environment
+python3.10 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# 2. Lean toolchain
+curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
+export PATH="$HOME/.elan/bin:$PATH"
+(cd lean && lake update && lake exe cache get && lake build)
+
+# 3. Start a local vLLM server (one A100 80GB for V1.5)
+python -m vllm.entrypoints.openai.api_server \
+  --model deepseek-ai/DeepSeek-Prover-V1.5-RL \
+  --tensor-parallel-size 1 --max-model-len 2048 \
+  --gpu-memory-utilization 0.9 --enforce-eager --trust-remote-code</code></pre>
+
+    <p>Run the main experiments:</p>
+    <pre><code># Exp 1 + Exp 3 (V1.5-RL): A-RL, B-RL at k in {16, 32, 64} + C1/C2 ablations
+bash scripts/run_exp1_exp3_rl.sh --provider openai_compat
+
+# Exp 2 (V1.5-Base): A-BASE, B-BASE at k in {16, 32, 64}
+bash scripts/run_exp2_base.sh --provider openai_compat
+
+# Cross-model: V2-7B + Kimina-Prover at k in {16, 32}, max-tokens 8192
+bash scripts/run_new_models.sh</code></pre>
+
+    <p>
+      The pod-bootstrap script <code>scripts/setup_prime_pod.sh</code> does Python + Lean + Mathlib cache + model weights end-to-end on a fresh Prime Intellect / RunPod A100 instance. Each run writes append-only <code>events.jsonl</code> plus per-attempt JSON and Lean files under <code>outputs/&lt;exp_hash&gt;/</code>; <code>exp_hash</code> is a deterministic function of the run config, so reruns are idempotent.
+    </p>
+  </section>
+
+  <section>
+    <h2>Citation</h2>
+    <pre><code>@inproceedings{burton2026inference,
+  title     = {Inference-Time Diversity in RL-Trained Lean Theorem Provers: A Diagnostic Study},
+  author    = {Burton, Zachary},
+  booktitle = {ICML 2026 AI for Math Workshop},
+  year      = {2026},
+  eprint    = {2601.16172},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url       = {https://arxiv.org/abs/2601.16172}
+}</code></pre>
+  </section>
+
+  <footer>
+    Code &amp; per-attempt logs:
+    <a href="https://github.com/zacn04/icml_hints_for_provers">github.com/zacn04/icml_hints_for_provers</a>
+    &middot; MIT license
+  </footer>
+</main>
+</body>
+</html>
