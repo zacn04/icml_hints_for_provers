@@ -161,7 +161,7 @@ per-attempt timeout, 8-way sharded by `i mod 8`.
   year   = {2026},
   eprint = {2601.16172},
   archivePrefix = {arXiv},
-  primaryClass  = {cs.LG},
+  primaryClass  = {cs.AI},
   url    = {https://arxiv.org/abs/2601.16172}
 }
 ```
