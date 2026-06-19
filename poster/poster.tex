@@ -104,10 +104,10 @@
 \begin{column}{0.485\linewidth}
 
 \pblock{Setup}{%
-\textbf{Model:} DeepSeek-Prover-V1.5-RL (7B), paired with non-RL V1.5-Base.\\
+\textbf{Models (all 7B):} primary within-architecture analysis on \textbf{DeepSeek-Prover-V1.5-RL} paired with non-RL \textbf{V1.5-Base}; cross-model replication on RL-trained \textbf{DeepSeek-Prover-V2-7B} (reasoning-mode) and SFT-trained \textbf{Goedel-Prover}.\\
 \textbf{Benchmark:} miniF2F-test (244 Lean~4 / Mathlib theorems).\\
 \textbf{Schedule:} 15 hand-picked tactic skeletons (\texttt{simp}, \texttt{intro}, \texttt{constructor}, \texttt{aesop}, \dots) $\times$ 8 NL goal hints = 120-slot grid. Budgets $k \in \{16,32,64\}$ take the first $k$ slots.\\
-\textbf{Decoding:} temperature 0.6, top-$p$ 0.95, max 1024 tokens. \textbf{Verifier:} \texttt{lake env lean --json}, 120\,s timeout, 8-way sharding by $i \bmod 8$.
+\textbf{Decoding:} temperature 0.6, top-$p$ 0.95; max 1024 tokens (V1.5 / Goedel completion-mode) or 8192 tokens (V2 reasoning-mode). \textbf{Verifier:} \texttt{lake env lean --json}, 120\,s timeout, 8-way sharding by $i \bmod 8$.
 }
 
 \pblock{Mode collapse: A-RL plateaus at $k{=}32$}{%
