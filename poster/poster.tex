@@ -7,8 +7,9 @@
 \usepackage[orientation=portrait,size=custom,width=61,height=91,scale=1.0]{beamerposter}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
-\renewcommand{\familydefault}{\sfdefault}  % sans-serif throughout
+\usepackage[default,scale=0.95]{inter}        % Inter as the default sans (matches the project page)
+\usepackage[scale=0.85]{sourcecodepro}        % Source Code Pro for texttt (pairs with Inter)
+\renewcommand{\familydefault}{\sfdefault}
 \usepackage{microtype}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -179,9 +180,9 @@ tail $-$ exactly the 17 theorems A-RL i.i.d.\ misses.
 \pblock{Cross-model generalisation}{%
 A$\to$B contrast on two further 7B Lean provers:
 \begin{itemize}
-\setlength{\itemsep}{0.15em}
-\item \textbf{RL-trained V2-7B:} $+3$ \emph{frontier} theorems no i.i.d.\ baseline of any tested model reaches.
-\item \textbf{SFT Goedel-Prover:} $\mathbf{-10.0 \pm 4.4}$ theorems ($n{=}3$ seeds, negative every seed). \emph{Helps RL, hurts SFT.}
+\setlength{\itemsep}{0.1em}
+\item \textbf{RL-trained V2-7B:} $+3$ \emph{frontier} theorems no i.i.d.\ baseline reaches.
+\item \textbf{SFT Goedel-Prover:} $\mathbf{-10.0 \pm 4.4}$ theorems ($n{=}3$ seeds). \emph{Helps RL, hurts SFT.}
 \end{itemize}
 }
 
