@@ -4,10 +4,11 @@
 
 \documentclass[final]{beamer}
 
-\usepackage[orientation=portrait,size=custom,width=61,height=91,scale=1.05]{beamerposter}
+\usepackage[orientation=portrait,size=custom,width=61,height=91,scale=1.0]{beamerposter}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
+\renewcommand{\familydefault}{\sfdefault}  % sans-serif throughout
 \usepackage{microtype}
 \usepackage{booktabs}
 \usepackage{graphicx}
@@ -17,72 +18,79 @@
 \usepackage{ragged2e}
 \usepackage{array}
 
-% --- Palette (matches docs/index.html: monochrome) ---------------------
-\definecolor{fg}{HTML}{111111}
+% --- Palette ------------------------------------------------------------
+\definecolor{ink}{HTML}{171717}
 \definecolor{muted}{HTML}{6e6e6e}
-\definecolor{rule}{HTML}{c8c8c8}
-\definecolor{accent}{HTML}{4C72B0}   % matches figures (B-RL blue)
-\definecolor{warn}{HTML}{DD8452}     % matches figures (A-RL orange)
+\definecolor{rule}{HTML}{d8d8d3}
+\definecolor{card}{HTML}{fafaf8}
+\definecolor{accent}{HTML}{1c3658}    % deep navy
+\definecolor{accent2}{HTML}{4C72B0}   % figure blue
+\definecolor{cream}{HTML}{f5efd6}     % TL;DR callout
 
-% --- Beamer theme overrides --------------------------------------------
-\setbeamercolor{block title}{fg=fg,bg=white}
-\setbeamercolor{block body}{fg=fg,bg=white}
-\setbeamerfont{block title}{size=\Large,series=\bfseries}
-\setbeamerfont{block body}{size=\normalsize}
-\setbeamertemplate{itemize items}{\raisebox{0.25ex}{\tiny$\blacksquare$}}
+% --- Beamer overrides ---------------------------------------------------
 \setbeamertemplate{navigation symbols}{}
-\setbeamertemplate{caption}[numbered]
+\setbeamertemplate{itemize items}{\raisebox{0.18ex}{\tiny\color{accent}$\blacksquare$}}
 
-% --- Layout helpers ----------------------------------------------------
-\newcommand{\hr}{\par\noindent\textcolor{rule}{\rule{\linewidth}{0.5pt}}\par}
-\newcommand{\bignum}[1]{\textcolor{accent}{\textbf{#1}}}
+% --- Custom block ------------------------------------------------------
+% \pblock{Heading}{body content}
+\newcommand{\pblock}[2]{%
+  \vspace{0.2em}%
+  \par\noindent%
+  {\color{accent}\rule{2.6cm}{2.6pt}}\par
+  \vspace{0.05em}%
+  {\fontsize{25}{29}\selectfont\bfseries\color{accent}#1}\par
+  \vspace{0.05em}%
+  {\color{rule}\rule{\linewidth}{0.5pt}}\par
+  \vspace{0.3em}%
+  {\color{ink}#2}\par
+}
 
-\title{Inference-Time Diversity in RL-Trained Lean Theorem Provers}
-\subtitle{A Diagnostic Study}
-\author{Zachary Burton}
-\institute{MIT \textquotesingle 26 \quad \texttt{zacburton@alum.mit.edu}}
+% Highlight phrase
+\newcommand{\bignum}[1]{\textcolor{accent2}{\textbf{#1}}}
 
 \begin{document}
 \begin{frame}[t]{}
 
 % ============================================================
-% HEADER
+% TITLE BAND (white background, accent stripe under)
 % ============================================================
-\begin{minipage}[c]{0.72\linewidth}
-  \raggedright
-  {\fontsize{50}{56}\selectfont\bfseries Inference-Time Diversity in\\RL-Trained Lean Theorem Provers}\\[0.3em]
-  {\fontsize{28}{34}\selectfont\itshape\color{muted} A Diagnostic Study}\\[0.4em]
-  {\Large\bfseries Zachary Burton} \quad
-  {\large MIT \textquotesingle 26} \quad
-  {\large\texttt{zacburton@alum.mit.edu}}\\[0.15em]
-  {\large\color{muted} ICML 2026 \textbullet{} AI for Math Workshop \textbullet{} July 11, COEX Hall D1, Seoul}
+\begin{minipage}[c]{0.74\linewidth}
+  \raggedright\color{ink}
+  {\fontsize{48}{54}\selectfont\bfseries Inference-Time Diversity in\par
+   RL-Trained Lean Theorem Provers}\\[0.2em]
+  {\fontsize{28}{32}\selectfont\itshape\color{muted} A Diagnostic Study}\\[0.55em]
+  {\fontsize{22}{26}\selectfont\bfseries\color{accent}Zachary Burton}\;\;
+  {\fontsize{20}{24}\selectfont\color{ink}MIT \textquotesingle 26}\;\;
+  {\fontsize{20}{24}\selectfont\ttfamily\color{ink}zacburton@alum.mit.edu}\\[0.1em]
+  {\fontsize{17}{21}\selectfont\color{muted} ICML 2026 \textbullet{} AI for Math Workshop \textbullet{} July 11, COEX Hall D1, Seoul}
 \end{minipage}\hfill
 \begin{minipage}[c]{0.22\linewidth}
   \raggedleft
   \begin{tikzpicture}
-    \node[draw=rule,line width=0.6pt,inner sep=0.2cm] {
-      \begin{minipage}{6.5cm}\centering
-        \qrcode[height=5.2cm]{https://arxiv.org/abs/2601.16172}\\[0.2em]
-        {\footnotesize\color{muted}arXiv:2601.16172}
+    \node[draw=accent, line width=1pt, inner sep=0.3cm, fill=white] {
+      \begin{minipage}{6.2cm}\centering
+        \qrcode[height=5.0cm]{https://arxiv.org/abs/2601.16172}\\[0.2em]
+        {\fontsize{14}{16}\selectfont\bfseries\color{accent}arXiv:2601.16172}
       \end{minipage}
     };
   \end{tikzpicture}
 \end{minipage}
 
-\vspace{0.4cm}
-\hr
-\vspace{0.4cm}
+\vspace{0.35cm}
+\noindent{\color{accent}\rule{\linewidth}{3pt}}\par
+\vspace{0.5cm}
 
 % ============================================================
-% TL;DR
+% TL;DR (cream callout)
 % ============================================================
-\begin{tikzpicture}
-  \node[draw=fg,line width=1pt,inner sep=0.5cm,fill=white]
-    {\begin{minipage}{0.95\linewidth}\centering
-      {\Large\bfseries TL;DR\quad}
-      {\Large\itshape RL-trained Lean theorem provers run out of ideas as you sample more. A fixed schedule of 15 tactic skeletons closes the gap, and the effect is RL-specific.}
-    \end{minipage}};
-\end{tikzpicture}
+{\setlength{\fboxrule}{1.5pt}\setlength{\fboxsep}{0.55cm}%
+\noindent\fcolorbox{accent}{cream}{%
+  \begin{minipage}{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}
+    \raggedright
+    {\fontsize{30}{34}\selectfont\bfseries\color{accent}TL;DR\;\;\;}%
+    {\fontsize{22}{28}\selectfont\itshape\color{ink}%
+     RL-trained Lean theorem provers run out of ideas as you sample more. A fixed schedule of 15 tactic skeletons closes the gap, and the effect is RL-specific.}
+  \end{minipage}}}
 
 \vspace{0.5cm}
 
@@ -94,26 +102,20 @@
 % ---------- LEFT COLUMN ----------
 \begin{column}{0.485\linewidth}
 
-\begin{block}{Setup}
-\justifying
-\textbf{Model:} DeepSeek-Prover-V1.5-RL (7B, paired with non-RL V1.5-Base).\\
-\textbf{Benchmark:} miniF2F-test (244 Lean 4 / Mathlib theorems).\\
-\textbf{Schedule:} 15 hand-picked tactic skeletons (\texttt{simp}, \texttt{intro},
-\texttt{constructor}, \texttt{aesop}, \dots) $\times$ 8 NL goal hints
-= 120-slot grid. Budgets $k \in \{16,32,64\}$ take the first $k$ slots.\\
-\textbf{Decoding:} temperature 0.6, top-$p$ 0.95, max 1024 tokens.
-\textbf{Verifier:} \texttt{lake env lean --json}, 120\,s timeout,
-8-way sharding by $i \bmod 8$.
-\end{block}
+\pblock{Setup}{%
+\textbf{Model:} DeepSeek-Prover-V1.5-RL (7B), paired with non-RL V1.5-Base.\\
+\textbf{Benchmark:} miniF2F-test (244 Lean~4 / Mathlib theorems).\\
+\textbf{Schedule:} 15 hand-picked tactic skeletons (\texttt{simp}, \texttt{intro}, \texttt{constructor}, \texttt{aesop}, \dots) $\times$ 8 NL goal hints = 120-slot grid. Budgets $k \in \{16,32,64\}$ take the first $k$ slots.\\
+\textbf{Decoding:} temperature 0.6, top-$p$ 0.95, max 1024 tokens. \textbf{Verifier:} \texttt{lake env lean --json}, 120\,s timeout, 8-way sharding by $i \bmod 8$.
+}
 
-\begin{block}{Mode collapse: A-RL plateaus at $k{=}32$}
+\pblock{Mode collapse: A-RL plateaus at $k{=}32$}{%
 \begin{center}
 \includegraphics[width=\linewidth]{../figures/scaling.pdf}
 \end{center}
-
-\vspace{0.3em}
+\vspace{0.2em}
 \centering
-\renewcommand{\arraystretch}{1.15}
+\renewcommand{\arraystretch}{1.18}
 \begin{tabular}{lccc}
 \toprule
                               & $k{=}16$       & $k{=}32$       & $k{=}64$       \\ \midrule
@@ -125,102 +127,97 @@ $\Delta$ relative             & $+44.7\%$       & $+38.1\%$       & $+42.9\%$   
 \end{tabular}\\[0.4em]
 \justifying\small\color{muted}
 Across-seed: mean $\Delta = +12.3 \pm 4.2$ theorems at $k{=}16$ ($n{=}3$ seeds, sign positive every seed).
-\end{block}
+}
 
-\begin{block}{Diversity ablation: structural content drives the gain}
+\pblock{Diversity ablation: structural content drives the gain}{%
 \begin{center}
 \includegraphics[width=\linewidth]{../figures/ablation.pdf}
 \end{center}
-\justifying\small
+\justifying
 \textbf{C2 < A-RL = C1 < C3 < B-RL.} Irrelevant Lean comments \emph{hurt};
 paraphrased instructions match the baseline; NL goal hints recover 58\% of the
 A$\to$B gap; tactic skeletons go furthest. The gain is structural, not just
 diversity.
-\end{block}
+}
 
 \end{column}
 
 % ---------- RIGHT COLUMN ----------
 \begin{column}{0.485\linewidth}
 
-\begin{block}{Solved-set overlap (V1.5-RL, $k{=}16$)}
+\pblock{Solved-set overlap (V1.5-RL, $k{=}16$)}{%
 \begin{center}
-\includegraphics[width=0.72\linewidth]{../figures/venn_overlap.pdf}
+\includegraphics[width=0.78\linewidth]{../figures/venn_overlap.pdf}
 \end{center}
-\justifying\small
+\justifying
 B-RL nearly Pareto-dominates A-RL: \bignum{20} theorems are solved only by B-RL,
 \bignum{3} only by A-RL, \bignum{35} by both.
-\end{block}
+}
 
-\begin{block}{Phenomenon is RL-specific}
-\justifying
-DeepSeek-Prover-V1.5-Base (the same model, no RL fine-tune) proves
-\textbf{0/244} theorems at every $k$, with \emph{or} without skeletons.
+\pblock{Phenomenon is RL-specific}{%
+DeepSeek-Prover-V1.5-Base (same model, no RL fine-tune) proves \textbf{0/244}
+theorems at every $k$, with \emph{or} without skeletons.
 \begin{itemize}
+\setlength{\itemsep}{0.15em}
 \item Base outputs \texttt{sorry} or echoes the statement in 58.8\% of attempts.
-\item RL model emits \texttt{sorry} in $<\!0.2\%$ of attempts; its mode collapse
-  manifests as persistent generation of failing-but-valid \texttt{rw}/\texttt{apply}
-  sequences.
+\item RL model emits \texttt{sorry} in $<\!0.2\%$ of attempts; collapse manifests as failing-but-valid \texttt{rw}/\texttt{apply} sequences.
 \end{itemize}
-\textbf{RL is the locus of both the proof capability and the inference-time
-collapse that limits it.}
-\end{block}
+\vspace{0.15em}
+\textbf{RL is the locus of both proof capability and the inference-time collapse that limits it.}
+}
 
-\begin{block}{Per-skeleton contribution (within $k{=}16$)}
+\pblock{Per-skeleton contribution (within $k{=}16$)}{%
 \begin{center}
 \includegraphics[width=\linewidth]{../figures/per_skeleton.pdf}
 \end{center}
-\justifying\small
+\justifying
 24 B-RL $k{=}16$ shards, within-shard counting. Empty skeleton carries most of the load
 (3.29/4.54 solves per shard); the other 14 skeletons together pick up the long
 tail $-$ exactly the 17 theorems A-RL i.i.d.\ misses.
-\end{block}
+}
 
-\begin{block}{Cross-model generalisation}
-\justifying
+\pblock{Cross-model generalisation}{%
 A$\to$B contrast on two further 7B Lean provers:
 \begin{itemize}
-\item \textbf{RL-trained V2-7B:} $+3$ \emph{frontier} theorems no i.i.d.\
-  baseline of any tested model reaches.
-\item \textbf{SFT Goedel-Prover:} $\mathbf{-10.0 \pm 4.4}$ theorems
-  ($n{=}3$ seeds, negative every seed). The intervention helps RL and
-  \emph{hurts} SFT.
+\setlength{\itemsep}{0.15em}
+\item \textbf{RL-trained V2-7B:} $+3$ \emph{frontier} theorems no i.i.d.\ baseline of any tested model reaches.
+\item \textbf{SFT Goedel-Prover:} $\mathbf{-10.0 \pm 4.4}$ theorems ($n{=}3$ seeds, negative every seed). \emph{Helps RL, hurts SFT.}
 \end{itemize}
-\end{block}
+}
 
 \end{column}
 \end{columns}
 
-\vspace{0.3cm}
+\vspace{0.35cm}
 
 % ============================================================
-% DISTRIBUTIONAL STRIP (full-width, below the 2 columns)
+% DARK CALLOUT STRIP (distributional evidence)
 % ============================================================
-\begin{tikzpicture}
-  \node[draw=fg,line width=0.6pt,inner sep=0.4cm,fill=white]
-    {\begin{minipage}{0.95\linewidth}\centering
-      {\Large\bfseries Distributional evidence of collapse:\quad}
-      {\Large Across \bignum{13{,}159} stochastic V1.5-RL samples, the median theorem gets only \bignum{2} distinct first-tactic heads; \bignum{49\%} of the benchmark gets a deterministic single strategic opening.}
-    \end{minipage}};
-\end{tikzpicture}
+{\setlength{\fboxrule}{0pt}\setlength{\fboxsep}{0.55cm}%
+\noindent\fcolorbox{accent}{accent}{%
+  \begin{minipage}{\dimexpr\linewidth-2\fboxsep\relax}
+    \centering\color{white}
+    {\fontsize{21}{25}\selectfont\bfseries Distributional evidence of collapse}\\[0.25em]
+    {\fontsize{18}{23}\selectfont
+     Across \textcolor{cream}{\textbf{13{,}159}} stochastic V1.5-RL samples, the median theorem gets only \textcolor{cream}{\textbf{2}} distinct first-tactic heads. \textcolor{cream}{\textbf{49\%}} of the benchmark gets a deterministic single strategic opening.}
+  \end{minipage}}}
 
 % ============================================================
 % FOOTER
 % ============================================================
 \vfill
-\hr
-\vspace{0.3cm}
-\begin{minipage}[c]{0.88\linewidth}
+\noindent{\color{rule}\rule{\linewidth}{0.5pt}}
+\vspace{0.25cm}
+
+\begin{minipage}[c]{0.86\linewidth}
   \raggedright
-  \large
-  \textbf{Code, prompts, per-attempt logs:}
-  \texttt{github.com/zacn04/icml\_hints\_for\_provers}\\[0.1em]
-  \textcolor{muted}{Lean 4 v4.9.0-rc1 \textbullet{} Mathlib pinned \textbullet{}
-  outputs/ run dirs are deterministic SHA-prefixes of the experiment config}
+  {\fontsize{20}{24}\selectfont\bfseries\color{accent}Code, prompts, per-attempt logs:}\;\;
+  {\fontsize{20}{24}\selectfont\ttfamily\color{ink}github.com/zacn04/icml\_hints\_for\_provers}\\[0.15em]
+  {\fontsize{15}{19}\selectfont\color{muted} Lean 4 v4.9.0-rc1 \textbullet{} Mathlib pinned \textbullet{} outputs/ run dirs are deterministic SHA-prefixes of the experiment config \textbullet{} MIT license}
 \end{minipage}\hfill
 \begin{minipage}[c]{0.10\linewidth}
   \raggedleft
-  \qrcode[height=2.2cm]{https://github.com/zacn04/icml_hints_for_provers}
+  \qrcode[height=2.4cm]{https://github.com/zacn04/icml_hints_for_provers}
 \end{minipage}
 
 \end{frame}
