@@ -19,13 +19,13 @@ ONLY_BASELINE = 3      # Solved only by A-RL (i.i.d. baseline)
 def create_venn_diagram(output_path: str = "venn_overlap"):
     """Create and save the Venn diagram."""
 
-    fig, ax = plt.subplots(figsize=(6, 5))
+    fig, ax = plt.subplots(figsize=(7.5, 6.0))
 
     # Create Venn diagram
     # venn2 takes (Ab, aB, AB) = (only left, only right, both)
     v = venn2(
         subsets=(ONLY_STRUCTURED, ONLY_BASELINE, BOTH),
-        set_labels=('B-RL (skeleton schedule)', 'A-RL (i.i.d. baseline)'),
+        set_labels=('B-RL\n(skeleton)', 'A-RL\n(i.i.d.)'),
         set_colors=('#4C72B0', '#DD8452'),
         alpha=0.7,
         ax=ax
@@ -51,27 +51,26 @@ def create_venn_diagram(output_path: str = "venn_overlap"):
             text.set_fontsize(14)
             text.set_fontweight('bold')
 
-    # Totals
+    # Totals: place below the set labels with extra vertical clearance
     ax.annotate(
-        'Total: 55 (22.5%)',
-        xy=(-0.4, -0.55),
-        fontsize=10,
-        ha='center',
-        color='#4C72B0'
+        'B-RL: 55/244 (22.5%)',
+        xy=(-0.55, -0.78), xycoords='data',
+        fontsize=10, ha='center', color='#4C72B0',
     )
     ax.annotate(
-        'Total: 38 (15.6%)',
-        xy=(0.4, -0.55),
-        fontsize=10,
-        ha='center',
-        color='#DD8452'
+        'A-RL: 38/244 (15.6%)',
+        xy=(0.55, -0.78), xycoords='data',
+        fontsize=10, ha='center', color='#DD8452',
     )
+
+    # Expand y-limits so the bottom labels don't get clipped
+    ax.set_ylim(-0.95, ax.get_ylim()[1])
 
     ax.set_title(
         'Solved-set overlap on miniF2F-test (V1.5-RL, k=16)',
         fontsize=12,
         fontweight='bold',
-        pad=15
+        pad=18
     )
 
     plt.tight_layout()
