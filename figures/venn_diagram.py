@@ -63,17 +63,17 @@ def create_venn_diagram(output_path: str = "venn_overlap"):
     # Totals: place below the set labels with extra vertical clearance
     ax.annotate(
         'B-RL: 55/244 (22.5%)',
-        xy=(-0.55, -0.78), xycoords='data',
+        xy=(-0.55, -0.92), xycoords='data',
         fontsize=10, ha='center', color='#4C72B0',
     )
     ax.annotate(
         'A-RL: 38/244 (15.6%)',
-        xy=(0.55, -0.78), xycoords='data',
+        xy=(0.55, -0.92), xycoords='data',
         fontsize=10, ha='center', color='#DD8452',
     )
 
     # Expand y-limits so the bottom labels don't get clipped
-    ax.set_ylim(-0.95, ax.get_ylim()[1])
+    ax.set_ylim(-1.05, ax.get_ylim()[1])
 
     ax.set_title(
         'Solved-set overlap on miniF2F-test (V1.5-RL, k=16)',
