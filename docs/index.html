@@ -252,7 +252,7 @@
   <section>
     <h2>Summary</h2>
     <p>
-      RL-trained Lean theorem provers hit a sampling ceiling. On miniF2F-test, doubling DeepSeek-Prover-V1.5-RL&rsquo;s i.i.d.&nbsp;sampling budget from <code>k=32</code> to <code>k=64</code> adds zero new solved theorems: both budgets land at 42/244. A fixed schedule of 15 common tactic openings (<code>simp</code>, <code>intro</code>, <code>constructor</code>, &hellip;) breaks the plateau, with a mean gain of +12.3 &plusmn; 4.2 theorems across n=3 seeds (sign positive in every seed). A controlled diversity ablation pins the gain to <em>structural</em> guidance, not prompt diversity: paraphrased instructions match the baseline, irrelevant Lean comments actively degrade it. The phenomenon is RL-specific. The same model&rsquo;s non-RL base checkpoint proves zero theorems with or without skeletons, so RL is the locus of both the proof capability and the inference-time collapse that limits it.
+      RL-trained Lean theorem provers hit a sampling ceiling. On miniF2F-test, doubling DeepSeek-Prover-V1.5-RL&rsquo;s i.i.d.&nbsp;sampling budget from <code>k=32</code> to <code>k=64</code> adds zero new solved theorems: both budgets land at 42/244. A fixed schedule of 15 common tactic openings (<code>simp</code>, <code>intro</code>, <code>constructor</code>, &hellip;) breaks the plateau, with a mean gain of +12.3 &plusmn; 4.2 theorems across n=3 seeds (sign positive in every seed). The ablation shows the gain is about structure, not prompt diversity: paraphrased instructions match the baseline; irrelevant Lean comments actively degrade it. The same model&rsquo;s non-RL base checkpoint proves zero theorems with or without skeletons, so RL produces both the proof ability and the narrow sampling that caps it.
     </p>
   </section>
 
@@ -305,7 +305,7 @@
 
     <figure>
       <img src="figures/venn_overlap.png" alt="Venn diagram of solved theorems at k=16: B-RL solves 55 (20 unique), A-RL solves 38 (3 unique), intersection 35.">
-      <figcaption>Figure 2. Solved-set overlap at k=16. B-RL nearly Pareto-dominates A-RL: 20 theorems are solved only by B-RL, just 3 are solved only by A-RL.</figcaption>
+      <figcaption>Figure 2. Solved-set overlap at k=16. 20 theorems are solved only by B-RL, 3 only by A-RL, 35 by both.</figcaption>
     </figure>
 
     <figure>
@@ -330,21 +330,21 @@
       </tbody>
     </table>
     <p class="footnote">
-      Clean structural-content gradient: C2 &lt; A-RL = C1 &lt; C3 &lt; B-RL. Irrelevant tokens hurt; pure paraphrase ties the baseline; NL hints alone recover roughly 58% of the A&rarr;B gap; tactic stems contribute the orthogonal remainder.
+      The A&rarr;B gap at k=16 is 17 theorems. C3 (NL hint, no tactic prefix) recovers 10 of those 17 on its own; the tactic stem in B picks up the other 7. C1 (paraphrased instructions, no prefix) adds nothing over A-RL. C2 (irrelevant comments) drops solves by 13.
     </p>
     <p class="tldr">
-      <strong>Takeaway:</strong> even the empty-skeleton C3 condition (no tactic prefix, NL goal hint only) closes 58% of the A&rarr;B gap. The RL-collapsed policy doesn&rsquo;t need to be <em>over-ridden</em> by a forced first tactic; it just needs to be <em>re-conditioned</em> on a different prompt prefix, and a different head of its narrow distribution becomes accessible.
+      <strong>Takeaway:</strong> the model already has the proofs. What changes between A and B is which head of a peaked sampling distribution gets reached. A forced first tactic is one way to reach a new head; an informative goal-hint comment is another, and on its own it closes 58% of the A&rarr;B gap.
     </p>
 
     <figure>
       <img src="figures/per_skeleton.png" alt="Bar chart of per-skeleton contribution to B-RL k=16: empty skeleton 3.29 of 4.54 solves per shard, intros 0.62, simp 0.17, norm_num 0.17, others below 0.1.">
-      <figcaption>Figure 4. Per-skeleton contribution within B-RL k=16 (24 shards). The empty skeleton (no tactic prefix) carries most of the load; the other 14 skeletons together pick up the long tail, contributing the 17 theorems A-RL i.i.d. misses.</figcaption>
+      <figcaption>Figure 4. Per-skeleton contribution within B-RL k=16 (24 shards). The empty skeleton accounts for 3.29 of 4.54 solves per shard; the other 14 skeletons split the remaining 1.25, which is exactly what closes A-RL&rsquo;s gap to B-RL.</figcaption>
     </figure>
 
     <ul class="findings">
       <li><strong>The phenomenon is RL-specific.</strong> The non-RL base checkpoint (V1.5-Base) proves 0/244 theorems at every k, with or without skeletons. RL creates both the proof capability and the inference-time collapse that limits it.</li>
       <li><strong>Distributional evidence.</strong> Across 13,159 stochastic samples, the median V1.5-RL theorem receives only 2 distinct first-tactic heads; 49% of the benchmark gets a deterministic single strategic opening.</li>
-      <li><strong>Cross-model contrast.</strong> RL-trained DeepSeek-Prover-V2-7B contributes +3 frontier theorems no i.i.d. baseline of any tested model reaches, despite a flat aggregate. SFT-trained Goedel-Prover loses &minus;10.0 &plusmn; 4.4 theorems across n=3 seeds (sign negative every seed). The A&rarr;B intervention helps an RL prover and hurts an SFT prover.</li>
+      <li><strong>Cross-model.</strong> Running A&rarr;B on two more 7B Lean provers: RL-trained DeepSeek-Prover-V2-7B adds +3 frontier theorems no i.i.d. baseline of any tested model reaches. SFT-trained Goedel-Prover loses &minus;10.0 &plusmn; 4.4 theorems across n=3 seeds (sign negative every seed). Skeletons help RL provers and hurt SFT ones.</li>
     </ul>
   </section>
 

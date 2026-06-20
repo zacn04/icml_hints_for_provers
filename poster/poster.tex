@@ -130,13 +130,12 @@ $\Delta$ relative             & $+44.7\%$       & $+38.1\%$       & $+42.9\%$   
 Across-seed: mean $\Delta = +12.3 \pm 4.2$ theorems at $k{=}16$ ($n{=}3$ seeds, sign positive every seed).
 }
 
-\pblock{Diversity ablation: structural content drives the gain}{%
+\pblock{Diversity ablation: where the gain comes from}{%
 \begin{center}
 \includegraphics[width=\linewidth]{../figures/ablation.pdf}
 \end{center}
 \justifying
-\textbf{C2 < A-RL = C1 < C3 < B-RL.} Irrelevant tokens hurt; paraphrase ties the baseline; \textbf{C3 (NL hint only, no tactic prefix) alone closes 58\% of the A$\to$B gap}; tactic skeletons go furthest.\\[0.2em]
-The RL-collapsed policy doesn't need to be \emph{over-ridden} by a forced first tactic --- just \emph{re-conditioned} on a different prompt prefix, and a different head of its narrow distribution becomes accessible.
+The A$\to$B gap at k=16 is 17 theorems. C3 (NL hint, no tactic prefix) recovers 10 of those 17; the tactic stem (B) picks up the other 7. Paraphrased instructions (C1) add nothing; irrelevant comments (C2) drop solves by 13. The model already has the proofs; what changes between A and B is which head of a peaked sampling distribution gets reached.
 }
 
 \end{column}
@@ -149,20 +148,17 @@ The RL-collapsed policy doesn't need to be \emph{over-ridden} by a forced first 
 \includegraphics[width=0.78\linewidth]{../figures/venn_overlap.pdf}
 \end{center}
 \justifying
-B-RL nearly Pareto-dominates A-RL: \bignum{20} theorems are solved only by B-RL,
-\bignum{3} only by A-RL, \bignum{35} by both.
+\bignum{20} theorems are solved only by B-RL, \bignum{3} only by A-RL, \bignum{35} by both.
 }
 
 \pblock{Phenomenon is RL-specific}{%
-DeepSeek-Prover-V1.5-Base (same model, no RL fine-tune) proves \textbf{0/244}
-theorems at every $k$, with \emph{or} without skeletons.
+V1.5-Base (same model, no RL fine-tune) proves \textbf{0/244} theorems at every $k$, with or without skeletons.
 \begin{itemize}
-\setlength{\itemsep}{0.15em}
+\setlength{\itemsep}{0.1em}
 \item Base outputs \texttt{sorry} or echoes the statement in 58.8\% of attempts.
-\item RL model emits \texttt{sorry} in $<\!0.2\%$ of attempts; collapse manifests as failing-but-valid \texttt{rw}/\texttt{apply} sequences.
+\item RL model emits \texttt{sorry} in $<\!0.2\%$ of attempts. Its failures are valid but wrong \texttt{rw}/\texttt{apply} sequences.
 \end{itemize}
-\vspace{0.15em}
-\textbf{RL is the locus of both proof capability and the inference-time collapse that limits it.}
+RL produces both the proof ability and the narrow sampling that caps it.
 }
 
 \pblock{Per-skeleton contribution (within $k{=}16$)}{%
@@ -170,17 +166,15 @@ theorems at every $k$, with \emph{or} without skeletons.
 \includegraphics[width=\linewidth]{../figures/per_skeleton.pdf}
 \end{center}
 \justifying
-24 B-RL $k{=}16$ shards, within-shard counting. Empty skeleton carries most of the load
-(3.29/4.54 solves per shard); the other 14 skeletons together pick up the long
-tail $-$ exactly the 17 theorems A-RL i.i.d.\ misses.
+24 B-RL $k{=}16$ shards, within-shard counting. The empty skeleton accounts for 3.29 of 4.54 solves per shard. The other 14 skeletons split the remaining 1.25, and those 1.25 per shard are exactly what closes A-RL's gap to B-RL.
 }
 
 \pblock{Cross-model generalisation}{%
-A$\to$B contrast on two further 7B Lean provers:
+A$\to$B on two more 7B Lean provers:
 \begin{itemize}
 \setlength{\itemsep}{0.1em}
-\item \textbf{RL-trained V2-7B:} $+3$ \emph{frontier} theorems no i.i.d.\ baseline reaches.
-\item \textbf{SFT Goedel-Prover:} $\mathbf{-10.0 \pm 4.4}$ theorems ($n{=}3$ seeds). \emph{Helps RL, hurts SFT.}
+\item RL-trained \textbf{V2-7B}: $+3$ frontier theorems no sampling baseline reaches.
+\item SFT-trained \textbf{Goedel-Prover}: $\mathbf{-10.0 \pm 4.4}$ theorems across $n{=}3$ seeds. Skeletons hurt SFT.
 \end{itemize}
 }
 
@@ -198,7 +192,7 @@ A$\to$B contrast on two further 7B Lean provers:
     \centering\color{white}
     {\fontsize{21}{25}\selectfont\bfseries Distributional evidence of collapse}\\[0.25em]
     {\fontsize{18}{23}\selectfont
-     Across \textcolor{cream}{\textbf{13{,}159}} stochastic V1.5-RL samples, the median theorem gets only \textcolor{cream}{\textbf{2}} distinct first-tactic heads. \textcolor{cream}{\textbf{49\%}} of the benchmark gets a deterministic single strategic opening.}
+     Across \textcolor{cream}{\textbf{13{,}159}} V1.5-RL samples, the median theorem produces only \textcolor{cream}{\textbf{2}} distinct first tactics. For \textcolor{cream}{\textbf{49\%}} of theorems the model picks the same first tactic every time.}
   \end{minipage}}}
 
 % ============================================================
