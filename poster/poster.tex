@@ -135,10 +135,8 @@ Across-seed: mean $\Delta = +12.3 \pm 4.2$ theorems at $k{=}16$ ($n{=}3$ seeds, 
 \includegraphics[width=\linewidth]{../figures/ablation.pdf}
 \end{center}
 \justifying
-\textbf{C2 < A-RL = C1 < C3 < B-RL.} Irrelevant Lean comments \emph{hurt};
-paraphrased instructions match the baseline; NL goal hints recover 58\% of the
-A$\to$B gap; tactic skeletons go furthest. The gain is structural, not just
-diversity.
+\textbf{C2 < A-RL = C1 < C3 < B-RL.} Irrelevant tokens hurt; paraphrase ties the baseline; \textbf{C3 (NL hint only, no tactic prefix) alone closes 58\% of the A$\to$B gap}; tactic skeletons go furthest.\\[0.2em]
+The RL-collapsed policy doesn't need to be \emph{over-ridden} by a forced first tactic --- just \emph{re-conditioned} on a different prompt prefix, and a different head of its narrow distribution becomes accessible.
 }
 
 \end{column}

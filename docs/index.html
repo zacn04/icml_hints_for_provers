@@ -332,6 +332,9 @@
     <p class="footnote">
       Clean structural-content gradient: C2 &lt; A-RL = C1 &lt; C3 &lt; B-RL. Irrelevant tokens hurt; pure paraphrase ties the baseline; NL hints alone recover roughly 58% of the A&rarr;B gap; tactic stems contribute the orthogonal remainder.
     </p>
+    <p class="tldr">
+      <strong>Takeaway:</strong> even the empty-skeleton C3 condition (no tactic prefix, NL goal hint only) closes 58% of the A&rarr;B gap. The RL-collapsed policy doesn&rsquo;t need to be <em>over-ridden</em> by a forced first tactic; it just needs to be <em>re-conditioned</em> on a different prompt prefix, and a different head of its narrow distribution becomes accessible.
+    </p>
 
     <figure>
       <img src="figures/per_skeleton.png" alt="Bar chart of per-skeleton contribution to B-RL k=16: empty skeleton 3.29 of 4.54 solves per shard, intros 0.62, simp 0.17, norm_num 0.17, others below 0.1.">
