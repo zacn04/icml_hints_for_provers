@@ -31,6 +31,15 @@ def create_venn_diagram(output_path: str = "venn_overlap"):
         ax=ax
     )
 
+    # Force both set labels to the same y-coordinate and spread them out
+    # horizontally. matplotlib_venn otherwise stacks them at different
+    # heights (because the circles have different radii) and clusters them
+    # near the visual centroid of each set's unique region.
+    if v.set_labels[0] is not None:
+        v.set_labels[0].set_position((-0.55, -0.65))
+    if v.set_labels[1] is not None:
+        v.set_labels[1].set_position(( 0.55, -0.65))
+
     # Add circles outline
     c = venn2_circles(
         subsets=(ONLY_STRUCTURED, ONLY_BASELINE, BOTH),
