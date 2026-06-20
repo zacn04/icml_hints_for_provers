@@ -9,7 +9,15 @@
 
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
 
-\usepackage{icml2026}
+\usepackage[accepted]{icml2026}
+
+% Workshop is non-archival; override the default PMLR notice
+% with a workshop-appropriate one. (\Notice@String contains '@', so the
+% redefinition must live inside \makeatletter...\makeatother.)
+\makeatletter
+\renewcommand{\Notice@String}{\textit{ICML 2026 Workshop on AI for Math},
+Seoul, South Korea. Non-archival. Copyright 2026 by the author.}
+\makeatother
 
 % Tectonic-compatible Times Roman with proper bold/italic shapes (the
 % `times` package loaded by icml2026.sty only ships T1 encoding; on
@@ -30,12 +38,12 @@
 \icmltitle{Inference-Time Diversity in\\RL-Trained Lean Theorem Provers:\\A Diagnostic Study}
 
 \begin{icmlauthorlist}
-\icmlauthor{Anonymous Author(s)}{anon}
+\icmlauthor{Zachary Burton}{mit}
 \end{icmlauthorlist}
 
-\icmlaffiliation{anon}{Anonymous Institution, Anonymous City, Anonymous Country}
+\icmlaffiliation{mit}{Massachusetts Institute of Technology, Cambridge, MA, USA}
 
-\icmlcorrespondingauthor{Anonymous Author(s)}{anon@example.com}
+\icmlcorrespondingauthor{Zachary Burton}{zacburton@alum.mit.edu}
 
 \icmlkeywords{Neural Theorem Proving, Lean4, Reinforcement Learning}
 
@@ -58,7 +66,7 @@ RL-trained Lean theorem provers mode-collapse at inference time: on miniF2F-test
 
 \section{Introduction}
 
-Recent neural theorem provers combine large language models with reinforcement learning and tree searches to achieve strong results on formal proof benchmarks~\cite{xin2024deepseek, chen2025seed, trinh2024solving, lin2025goedel}. The prevailing paradigm assumes that sufficient RL training and inference-time compute will cause models to internalize the structural priors required for formal proofs.
+Recent neural theorem provers combine large language models with reinforcement learning and tree searches to achieve strong results on formal proof benchmarks~\cite{xin2024deepseek, chen2025seed, trinh2024solving, lin2025goedel}.\footnote{Code, prompts, and per-attempt logs: \url{https://github.com/zacn04/icml_hints_for_provers}.} The prevailing paradigm assumes that sufficient RL training and inference-time compute will cause models to internalize the structural priors required for formal proofs.
 
 We present evidence that this assumption is flawed. RL-trained provers suffer from \emph{mode collapse} at inference time: they converge on a narrow set of proof strategies and fail to explore alternatives even when given additional sampling budget. On miniF2F-test with DeepSeek-Prover-V1.5-RL, i.i.d.\ sampling at temperature 0.6 solves 38 theorems at $k{=}16$, 42 at $k{=}32$, and \emph{still 42} at $k{=}64$---32 additional stochastic samples find zero new proofs.
 
@@ -70,7 +78,7 @@ A recent line of work has examined whether RL with verifiable rewards (RLVR) gen
 \begin{itemize}
     \item We diagnose mode collapse in RL-trained Lean provers via two complementary signatures: an i.i.d.\ sampling plateau at $k{=}32\to64$ on V1.5-RL that a fixed 15-skeleton schedule breaks, and a controlled diversity ablation (skeleton vs.\ paraphrase vs.\ irrelevant comment) showing the gain comes from structural guidance, not prompt diversity. A dedicated NL-only ablation (C3) further isolates the natural-language hint contribution from the tactic-prefix contribution.
     \item A leave-one-out empirical-difficulty stratification, grounded in cross-prover baseline solvability, localizes the structural gain to the easy/trivial buckets where V1.5-RL's gap to other open-source provers concentrates, and reveals a clean structural-content gradient across the three perturbations.
-    \item We establish RL-specificity in two ways. A within-architecture base-vs-RL contrast on V1.5 shows the non-RL base has \emph{zero} proof capability, so RL is both the source of the capability and the source of its collapse. A cross-model contrast on two additional 7B provers shows that RL-trained DeepSeek-Prover-V2-7B gains $+3$ frontier theorems unreachable by any i.i.d.\ baseline despite a flat aggregate, while SFT-trained Goedel-Prover loses $-5$.
+    \item We establish RL-specificity in two ways. A within-architecture base-vs-RL contrast on V1.5 shows the non-RL base has \emph{zero} proof capability, so RL is both the source of the capability and the source of its collapse. A cross-model contrast on two additional 7B provers shows that RL-trained DeepSeek-Prover-V2-7B gains $+3$ frontier theorems unreachable by any i.i.d.\ baseline despite a flat aggregate, while SFT-trained Goedel-Prover loses $-10.0 \pm 4.4$ theorems across $n{=}3$ seeds (sign preserved every seed).
 \end{itemize}
 
 
@@ -112,7 +120,7 @@ Both conditions execute exactly $k$ LLM calls per theorem and the search exits o
 We evaluate on miniF2F-test (244 theorems, Lean 4 split), with the Lean toolchain pinned to v4.9.0-rc1 and Mathlib pinned to commit \texttt{7fa489a5}. This pinning matches the environment used to train DeepSeek-Prover-V1.5 and is critical for clean attribution: newer Lean versions ship substantially more powerful built-in tactic solvers (notably \texttt{simp}, \texttt{aesop}, and \texttt{nlinarith}), and running on those toolchains would conflate the gain from our intervention with the gain from Lean's own evolution.
 
 \paragraph{Decoding and inference.}
-Sampling uses temperature 0.6 and top-$p$ 0.95 for all conditions. Completion-mode provers use a 1024-token generation budget per attempt; reasoning-mode provers use 8192 tokens to accommodate their chain-of-thought before the Lean code block. Inference runs on a single A100 GPU per experiment (80GB for the V1.5 runs, 40GB for V2 and Goedel-Prover; both sufficient). Lean verification uses \texttt{lake env lean --json} with a 120-second per-attempt timeout, and we shard theorems 8-way across parallel workers ($i \bmod 8$). Full code, prompt templates, and per-attempt logs are available at \emph{[redacted for double-blind review; URL provided upon acceptance]}.
+Sampling uses temperature 0.6 and top-$p$ 0.95 for all conditions. Completion-mode provers use a 1024-token generation budget per attempt; reasoning-mode provers use 8192 tokens to accommodate their chain-of-thought before the Lean code block. Inference runs on a single A100 GPU per experiment (80GB for the V1.5 runs, 40GB for V2 and Goedel-Prover; both sufficient). Lean verification uses \texttt{lake env lean --json} with a 120-second per-attempt timeout, and we shard theorems 8-way across parallel workers ($i \bmod 8$). Full code, prompt templates, and per-attempt logs are available at \url{https://github.com/zacn04/icml_hints_for_provers}.
 
 
 \section{Results}
@@ -139,6 +147,13 @@ Relative improvement & +44.7\% & +38.1\% & +42.9\% \\
 \label{tab:scaling}
 \end{table*}
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../../figures/scaling.pdf}
+\caption{A-RL i.i.d.\ sampling flatlines at 42/244 from $k{=}32$ onward; B-RL with the 15-skeleton schedule keeps climbing.}
+\label{fig:scaling}
+\end{figure}
+
 The baseline's plateau from $k{=}32$ to $k{=}64$ is striking: 32 additional samples---each with different random seeds---fail to find a single new proof. This indicates that the model is trapped in a narrow region of the proof strategy space. Temperature sampling alone cannot break this mode collapse.
 
 \subsection{Diversity Ablation: Structure vs.\ Diversity}
@@ -162,6 +177,13 @@ C1 (instruction paraphrases) & 38 & 15.6\% \\
 \caption{Diversity ablation at $k{=}16$ (all $/244$). Skeletons improve; paraphrases match baseline at topline; comments degrade. Section~\ref{sec:difficulty} shows C1's match hides redistribution.}
 \label{tab:ablation}
 \end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../../figures/ablation.pdf}
+\caption{Structural-content gradient at $k{=}16$: C2 $<$ A-RL $=$ C1 $<$ C3 $<$ B-RL. Irrelevant tokens hurt; pure paraphrase matches the baseline; NL goal hints alone (C3) recover most of the A--B gap; tactic stems go furthest.}
+\label{fig:ablation}
+\end{figure}
 
 The C2 result is interesting. We observe that irrelevant Lean comments injected before the theorem actually \emph{degrade} performance, suggesting that surface-level prompt perturbations that lack tactic-level structure interfere with the model's collapsed policy. The C1 topline equality with A-RL is suggestive but, by itself, ambiguous: it is consistent with both ``C1 has no effect'' and ``C1 helps on some theorems while hurting an equal number on others.'' We disambiguate these in Section~\ref{sec:difficulty} by stratifying solves by empirical formalization difficulty.
 
@@ -300,7 +322,14 @@ V2-7B        & RL                    & 126/244 (51.6\%) & \textbf{127/244 (52.0\
 
 \paragraph{V2 frontier solves.} The $+1$ aggregate hides the most theoretically interesting outcome in the cross-model matrix. We compute $\sigma_{-\text{V2}}(\tau)$ on the same leave-one-out construction as Section~\ref{sec:setup}, dropping all V2 baselines from the difficulty score. Three theorems with $\sigma_{-\text{V2}}{=}0$---\texttt{imo\_1960\_p2}, \texttt{imo\_1962\_p2}, and \texttt{numbertheory\_x5neqy2p4}---are solved by V2 structured at $k{=}16$ but by none of the other six sample baselines in our matrix (V1.5-RL, Goedel, V2-sample, at multiple $k$). Two are IMO problems. These are theorems where structured guidance is the only known route to a solution at this compute scale, and they are exactly the kind of frontier finding that the aggregate metric obscures and that V1.5-RL's structured condition does \emph{not} produce (Section~\ref{sec:difficulty}). V2 structured is therefore the first condition in our matrix that opens up the $\sigma{=}0$ frontier, even though its aggregate is flat. We refrain from inferring a general pattern from $n{=}3$, but flag this as evidence that the aggregate $\Delta$ metric is a lossy summary of where structural guidance actually pays off, and as a concrete falsifier for the strong version of our hypothesis: if frontier theorems were beyond reach of all current models in this size class, V2 structured should not have unlocked any.
 
-\paragraph{Solved-set overlap.} A paired view of A-RL vs.\ B-RL at $k{=}16$ further constrains the ``more compute would suffice'' objection: of the 38 theorems solved by A-RL, B-RL solves 35 of them and adds 20 new ones (only 3 A-RL solves are lost, consistent with stochastic variation in shard scheduling). The intervention is therefore near-Pareto-dominant on this benchmark and accesses a \emph{different region} of the proof space rather than reproducing the baseline's hits with a different prompt---the 20 unique solves are concentrated in \texttt{mathd\_algebra} and \texttt{mathd\_numbertheory} problems that no i.i.d.\ sampling at this budget reaches.
+\paragraph{Solved-set overlap.} A paired view of A-RL vs.\ B-RL at $k{=}16$ further constrains the ``more compute would suffice'' objection (Figure~\ref{fig:venn}): of the 38 theorems solved by A-RL, B-RL solves 35 of them and adds 20 new ones (only 3 A-RL solves are lost, consistent with stochastic variation in shard scheduling). The intervention is therefore near-Pareto-dominant on this benchmark and accesses a \emph{different region} of the proof space rather than reproducing the baseline's hits with a different prompt---the 20 unique solves are concentrated in \texttt{mathd\_algebra} and \texttt{mathd\_numbertheory} problems that no i.i.d.\ sampling at this budget reaches.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.85\columnwidth]{../../figures/venn_overlap.pdf}
+\caption{Solved-set overlap of A-RL vs.\ B-RL at $k{=}16$ on V1.5-RL. 20 theorems are solved only by B-RL, 3 only by A-RL, 35 by both.}
+\label{fig:venn}
+\end{figure}
 
 \subsection{Seed Variance and Robustness of the Asymmetry}
 \label{sec:seed}
@@ -367,18 +396,24 @@ Our results reframe the narrative from ``tactic skeletons improve performance'' 
 The mode collapse we observe has direct implications for the common practice of scaling inference compute. If i.i.d.\ sampling has diminishing returns far earlier than assumed, then simply increasing $k$ is wasteful. Our results suggest that \emph{structural diversity}---varying the proof strategy, not just the random seed---is a more efficient axis for scaling inference compute. This is complementary to tree-based methods like HyperTree~\cite{lample2022hypertree}, which achieve diversity through explicit search rather than prompt perturbation.
 
 \paragraph{Structural content as a gradient.}
-The bucket-stratified ablation (Section~\ref{sec:difficulty}, Table~\ref{tab:bucket_strat}) refines the structural-vs-diversity dichotomy into a continuous gradient. The three perturbations differ in how much tactic-level structural content they carry: skeleton (literal Lean tactic prefix or a comment naming a tactic), paraphrase (paraphrased general-purpose instruction without tactic specifics), comment (a content-free token marker). The combined easy+trivial NET tracks this gradient cleanly---$+15 / 0 / -14$ for skeleton, paraphrase, and comment respectively---because that is where V1.5-RL's gap to other open-source provers concentrates. Equally informative is the within-skeleton decomposition (Table~\ref{tab:attempt_class}) and the dedicated C3 ablation: a natural-language tactic-suggestion comment alone produces $+8$ new solves at the attempt-level breakdown and $48/244$ (vs.\ $38$ baseline) when run as a standalone 16-attempt schedule, while literal Lean tactic prefixes contribute the remaining $+12$ NEW. Both are forms of tactic-stem-level structural guidance delivered at different abstraction layers, and both contribute additively. We caveat that two of the 15 skeletons (\texttt{aesop}, \texttt{norm\_num}) are closer to one-shot decision procedures than to genuine ``stems''; part of the structural gain may therefore be attributable to V1.5-RL underusing Lean's powerful built-in solvers rather than to a literal first-tactic distributional shift, and disentangling these two contributions is a natural follow-up.
+The bucket-stratified ablation (Section~\ref{sec:difficulty}, Table~\ref{tab:bucket_strat}) refines the structural-vs-diversity dichotomy into a continuous gradient. The three perturbations differ in how much tactic-level structural content they carry: skeleton (literal Lean tactic prefix or a comment naming a tactic), paraphrase (paraphrased general-purpose instruction without tactic specifics), comment (a content-free token marker). The combined easy+trivial NET tracks this gradient cleanly---$+15 / 0 / -14$ for skeleton, paraphrase, and comment respectively---because that is where V1.5-RL's gap to other open-source provers concentrates. Equally informative is the within-skeleton decomposition (Table~\ref{tab:attempt_class}) and the dedicated C3 ablation: a natural-language tactic-suggestion comment alone produces $+8$ new solves at the attempt-level breakdown and $48/244$ (vs.\ $38$ baseline) when run as a standalone 16-attempt schedule, while literal Lean tactic prefixes contribute the remaining $+12$ NEW. Both are forms of tactic-stem-level structural guidance delivered at different abstraction layers, and both contribute additively. Several of the 15 skeletons (\texttt{simp}, \texttt{aesop}, \texttt{norm\_num}, \texttt{ring}, \texttt{linarith}, \texttt{nlinarith}, \texttt{ring\_nf}) function as one-shot decision procedures, which raises the concern that the structural gain might just be V1.5-RL underusing Lean's built-in automation rather than a true distributional shift in its tactic policy. We can check this directly. We classify each of the 24 NEW B-RL k=16 solves (theorems that B-RL solves and matched-shard A-RL does not) by whether (i) the injected tactic was one of the closers above \emph{and} the model's continuation was effectively empty (a no-op like \texttt{done}/\texttt{rfl} or fewer than eight non-trivial tokens), or (ii) the model produced a substantive continuation beyond the skeleton. Only 3 of 24 NEW solves (12.5\%) fall in category (i); the remaining 21 (87.5\%) require the model to extend the skeleton with real tactics. The skeleton schedule therefore primarily acts as a prompt prefix that perturbs the model out of its collapsed sampling head, not as a Mathlib-automation top-up.
 
 \paragraph{RL as both cause and prerequisite.}
 The base model result imposes an unexpected constraint on any account of mode collapse in this domain. Because DeepSeek-Prover-V1.5-Base proves zero theorems regardless of skeletons, mode collapse cannot be attributed to a pre-existing limitation of the underlying language model that RL merely amplifies. Instead, RL plays a dual role: it is the stage at which proof capability is created (the base model has none), and it is also the stage at which that capability is collapsed onto a narrow policy. Any future intervention---whether at training time (e.g., entropy-regularized RL) or inference time (e.g., learned skeleton retrieval)---must navigate this trade-off rather than treat collapse as a separable problem.
 
-\paragraph{Limitations.}
-The cleanest within-architecture isolation of RL's effect (Section~\ref{sec:base_vs_rl}) is only possible on V1.5 because no other Lean prover in our matrix releases a paired non-RL base checkpoint. A third RL replication on Kimina-Prover~\cite{wang2025kimina} was attempted but cut for compute reasons after an output-extractor fix; a partial sample-baseline produced $20/35$ trials ($57\%$) and is deferred to future work. Cross-model $k$-scaling beyond $k{=}16$ is currently established on V1.5-RL ($k \in \{16,32,64\}$) and Goedel-Prover ($k \in \{16,32\}$); extending V2 to $k \geq 32$, evaluating on ProofNet/PutnamBench, exploring constrained decoding beyond the first tactic, and replacing the hand-selected $15{\times}8$ grid with a learned per-theorem retriever are all natural next steps. The first-tactic-distribution measurement (Section~\ref{sec:first_tactic}) is currently V1.5-RL only; extending it to V2-7B and Goedel would let us test whether first-tactic-head concentration tracks the RL-vs-SFT asymmetry we already observe at the solve-rate level (Section~\ref{sec:seed}).
+\paragraph{Saturation vs.\ RL-specificity.}
+The cross-model $\Delta$ pattern at $k{=}16$ is monotone in baseline headroom: V1.5-RL ($A=38$) gains $+17$, V2-7B ($A=126$) gains $+1$, Goedel ($A=90$) loses $-10$. A pure saturation account predicts this ordering with no appeal to RL vs.\ SFT, and with only one SFT model in the matrix---which is also the highest-baseline prover---the labels ``SFT'' and ``saturated'' are not statistically separable. We take this objection seriously, and the cross-model evidence in Section~\ref{sec:multi_model} is best read as compatible with both accounts rather than as decisive for the RL-specific reading. What the cross-model data \emph{can't} explain on its own is the V1.5-Base control: a non-RL prover at the same pretrained scale with $A=0$ and $B=0$ at every tested $k$ (Section~\ref{sec:base_vs_rl}). The within-architecture base-vs-RL contrast is the cleanest evidence we have that RL is what creates the policy whose collapse we are diagnosing. We frame the cross-model results as a consistency check on top of this within-architecture result, not as an independent confirmation; a matched-capability SFT control at lower baseline pass@k would be the natural next experiment.
+
+\paragraph{Static inference vs.\ agentic systems.}
+The setup studied here is deterministic, zero-shot, single-pass: each attempt is a single forward pass of the model on a prompt with no compiler feedback, proof-state reflection, or interactive repair. This is a deliberate design choice---we want to isolate the model's intrinsic sampling behavior from the orchestrator's. Modern Lean systems built around agentic loops (interactive compiler diagnostics, retrieval over Mathlib lemmas, multi-pass proof repair) already mitigate this collapse in practice, and the diagnostic we present is most useful to that line of work as a measurement of the underlying model that the harness is layered on top of. Extending our schedule + first-tactic-distribution measurement to (i) reasoning provers with longer trajectories and (ii) interactive harnesses around closed-weight frontier models is the next obvious step, but is out of scope for a single-model diagnostic study at this size.
+
+\paragraph{Other limitations.}
+The cleanest within-architecture isolation of RL's effect (Section~\ref{sec:base_vs_rl}) is only possible on V1.5 because no other Lean prover in our matrix releases a paired non-RL base checkpoint. A third RL replication on Kimina-Prover~\cite{wang2025kimina} was attempted but cut for compute reasons after an output-extractor fix; a partial sample-baseline produced $20/35$ trials ($57\%$) and is deferred to future work. Cross-model $k$-scaling beyond $k{=}16$ is currently established on V1.5-RL ($k \in \{16,32,64\}$) and Goedel-Prover ($k \in \{16,32\}$); extending V2 to $k \geq 32$, evaluating on ProofNet/PutnamBench, exploring constrained decoding beyond the first tactic, and replacing the hand-selected $15{\times}8$ grid with a learned per-theorem retriever are all natural next steps. Multi-seed coverage at $k{=}16$ is $n{=}3$ (Section~\ref{sec:seed}); the headline $k{=}32 \to k{=}64$ plateau is single-seed and would benefit from replication. The first-tactic-distribution measurement (Section~\ref{sec:first_tactic}) is currently V1.5-RL only; extending it to V2-7B and Goedel would let us test whether first-tactic-head concentration tracks the RL-vs-SFT asymmetry we already observe at the solve-rate level (Section~\ref{sec:seed}).
 
 
 \section{Conclusion}
 
-We have used a deterministic 15-skeleton schedule as a probe to diagnose mode collapse in RL-trained Lean provers, and shown that the collapse it reveals is RL-specific in two distinct senses: it is absent in the non-RL V1.5-Base variant (which has no proof capability at all), and it is partially remediated by structural guidance only on RL-trained models in our cross-model matrix---never on the SFT-trained Goedel-Prover. The magnitude of the remediation varies sharply by post-training recipe ($+17$ on V1.5-RL; $+1$ aggregate but $+3$ frontier solves on V2-7B; $-5$ on Goedel-Prover-SFT), which we read as evidence that the underlying phenomenon is real but pipeline-contingent rather than universal. The most natural follow-ups are (i)~converting the diagnostic from a sampling-plateau metaphor into a direct first-tactic-distribution measurement on the existing logs; (ii)~replacing the hand-designed 15-skeleton schedule with a learned, per-theorem skeleton retriever, which the gradient in Section~\ref{sec:difficulty} suggests should outperform the fixed grid; and (iii)~closing the loop at training time via entropy-regularized or skeleton-conditioned RL, since the V1.5-Base control implies that any training-time intervention will be constrained by the dual role RL plays in creating and collapsing the proof policy.
+We have used a deterministic 15-skeleton schedule as a probe to diagnose mode collapse in RL-trained Lean provers, and shown that the collapse it reveals is RL-specific in two distinct senses: it is absent in the non-RL V1.5-Base variant (which has no proof capability at all), and it is partially remediated by structural guidance only on RL-trained models in our cross-model matrix---never on the SFT-trained Goedel-Prover. The magnitude of the remediation varies sharply by post-training recipe ($+17$ on V1.5-RL; $+1$ aggregate but $+3$ frontier solves on V2-7B; $-10.0 \pm 4.4$ on Goedel-Prover-SFT across $n{=}3$ seeds), which we read as evidence that the underlying phenomenon is real but pipeline-contingent rather than universal. The most natural follow-ups are (i)~converting the diagnostic from a sampling-plateau metaphor into a direct first-tactic-distribution measurement on the existing logs; (ii)~replacing the hand-designed 15-skeleton schedule with a learned, per-theorem skeleton retriever, which the gradient in Section~\ref{sec:difficulty} suggests should outperform the fixed grid; and (iii)~closing the loop at training time via entropy-regularized or skeleton-conditioned RL, since the V1.5-Base control implies that any training-time intervention will be constrained by the dual role RL plays in creating and collapsing the proof policy.
 
 
 \bibliographystyle{icml2026}
