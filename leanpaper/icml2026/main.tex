@@ -11,12 +11,13 @@
 
 \usepackage[accepted]{icml2026}
 
-% Workshop is non-archival; override the default PMLR notice
-% with a workshop-appropriate one. (\Notice@String contains '@', so the
-% redefinition must live inside \makeatletter...\makeatother.)
+% Workshop-specific footer text, exactly as requested by the AI4Math
+% chairs in the camera-ready email. (\ICML@appearing contains '@', so
+% the redefinition must live inside \makeatletter...\makeatother.)
 \makeatletter
-\renewcommand{\Notice@String}{\textit{ICML 2026 Workshop on AI for Math},
-Seoul, South Korea. Non-archival. Copyright 2026 by the author.}
+\renewcommand{\ICML@appearing}{The \textit{$\mathit{3}^{rd}$ AI for Math Workshop} at the $\mathrm{43}^{rd}$
+International Conference on Machine Learning (ICML), Seoul, South Korea, 2026.
+Copyright 2026 by the author(s).}
 \makeatother
 
 % Tectonic-compatible Times Roman with proper bold/italic shapes (the
